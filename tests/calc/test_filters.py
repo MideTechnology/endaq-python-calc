@@ -1,6 +1,6 @@
-from nre_utils.calc import filters
-
 import numpy as np
+
+from endaq.calc import filters
 
 
 def test_highpass():

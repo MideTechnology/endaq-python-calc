@@ -6,7 +6,7 @@ import numpy as np
 
 import itertools
 
-from nre_utils.calc import shock
+from endaq.calc import shock
 
 
 @pytest.mark.parametrize(
