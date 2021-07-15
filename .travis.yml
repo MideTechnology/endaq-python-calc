@@ -2,9 +2,10 @@
 before_install:
   - python --version
 install:
+  - pip install -U attrs numpy  # resolves dependency issues w/ scipy & hypothesis
   - pip install .[test]
   - pip install pytest-cov
-script: python -m pytest ./tests --cov=endaq/cloud
+script: python -m pytest ./tests --cov=endaq.cloud
 after_success:
   - codecov
 
