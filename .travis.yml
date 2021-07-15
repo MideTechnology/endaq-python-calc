@@ -4,7 +4,7 @@ before_install:
 install:
   - pip install .[test]
   - pip install pytest-cov
-script: python -m pytest ./testing/ --cov=idelib-archive
+script: python -m pytest ./tests --cov=idelib-archive
 after_success:
   - codecov
 
