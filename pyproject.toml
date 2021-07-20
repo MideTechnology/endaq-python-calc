@@ -56,5 +56,4 @@
       variable-naming-style="camelCase"
   [tool.pytest]
     [tool.pytest.ini_options]
-      required_plugins=["pytest-cov"]
       testpaths=[""]
