@@ -6,7 +6,7 @@ import hypothesis.strategies as hyp_st
 import hypothesis.extra.numpy as hyp_np
 import numpy as np
 
-from nre_utils.calc import psd, stats
+from endaq.calc import psd, stats
 
 
 @pytest.mark.parametrize(
