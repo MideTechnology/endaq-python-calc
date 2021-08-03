@@ -1,3 +1,4 @@
+from collections import namedtuple
 import warnings
 
 import numpy as np
@@ -67,7 +68,7 @@ def differentiate(f, psd, n=1):
     return f, psd * factor
 
 
-def to_jagged(f, psd, freq_splits, axis=-1, mode="sum"):
+def to_jagged(f, psd, freq_splits, axis=-1, agg="sum"):
     """
     Calculate a periodogram over non-uniformly spaced frequency bins.
 
@@ -75,10 +76,11 @@ def to_jagged(f, psd, freq_splits, axis=-1, mode="sum"):
     :param freq_splits: the boundaries of the frequency bins; must be strictly
         increasing
     :param axis: same as the axis parameter provided to `scipy.signal.welch`
-    :param mode: the method for aggregating values into bins; 'mean' preserves
+    :param agg: the method for aggregating values into bins; 'mean' preserves
         the PSD's area-under-the-curve, 'sum' preserves the PSD's "energy"
     """
-    if not np.all(np.diff(freq_splits, prepend=0) > 0):
+    f = np.asarray(f)
+    if f.ndim != 1 or not np.all(np.diff(freq_splits, prepend=0) > 0):
         raise ValueError
 
     # Check that PSD samples do not skip any frequency bins
@@ -90,17 +92,38 @@ def to_jagged(f, psd, freq_splits, axis=-1, mode="sum"):
             RuntimeWarning,
         )
 
-    psd_jagged = _np_histogram_nd(f, bins=freq_splits, weights=psd)
-    if mode == "mean":
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=RuntimeWarning)  # x/0
+    if isinstance(agg, str):
+        if agg not in ("sum", "mean"):
+            raise ValueError(f'invalid aggregation mode "{agg}"')
 
-            psd_jagged = np.nan_to_num(  # <- fix divisions by zero
-                psd_jagged / np.histogram(f, bins=freq_splits)[0]
-            )
+        # Reshape frequencies for histogram function
+        f_ndim = np.broadcast_to(
+            f,
+            (psd.shape[:axis] + psd.shape[axis + 1 or psd.ndim :] + (psd.shape[axis],)),
+        )
+        f_ndim = np.moveaxis(f_ndim, -1, axis)
+
+        # Calculate sum via histogram function
+        psd_jagged = _np_histogram_nd(f_ndim, bins=freq_splits, weights=psd, axis=axis)
+
+        # Adjust values for mean calculation
+        if agg == "mean":
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=RuntimeWarning)  # x/0
+
+                psd_jagged = np.moveaxis(psd_jagged, axis, -1)
+                psd_jagged = np.nan_to_num(  # <- fix divisions by zero
+                    psd_jagged / np.histogram(f, bins=freq_splits)[0]
+                )
+                psd_jagged = np.moveaxis(psd_jagged, -1, axis)
+
+    else:
+        psd_binned = np.split(psd, np.searchsorted(f, freq_splits), axis=axis)[1:-1]
+        psd_jagged = np.stack([agg(a, axis=axis) for a in psd_binned], axis=axis)
 
     f = (freq_splits[1:] + freq_splits[:-1]) / 2
-    return f, psd_jagged
+
+    return namedtuple("JaggedPSDResults", "center_freqs, values")(f, psd_jagged)
 
 
 def to_octave(f, psd, fstart=1, octave_bins=12, **kwargs):
@@ -120,4 +143,7 @@ def to_octave(f, psd, fstart=1, octave_bins=12, **kwargs):
     )
     assert len(center_freqs) + 1 == len(freq_splits)
 
-    return center_freqs, to_jagged(f, psd, freq_splits=freq_splits, **kwargs)[1]
+    return namedtuple("OctavePSDResults", "center_freqs, values")(
+        center_freqs,
+        to_jagged(f, psd, freq_splits=freq_splits, **kwargs).values,
+    )
