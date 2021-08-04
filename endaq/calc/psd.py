@@ -146,4 +146,52 @@ def to_octave(f, psd, fstart=1, octave_bins=12, **kwargs):
     return namedtuple("OctavePSDResults", "center_freqs, values")(
         center_freqs,
         to_jagged(f, psd, freq_splits=freq_splits, **kwargs).values,
+
+
+def vc_curves(f, psd, fstart=1, octave_bins=12, axis=-1):
+    """
+    Calculate Vibration Criterion (VC) curves from an acceration periodogram.
+
+    # Theory behind the calculation
+
+    Let x(t) be a real-valued time-domain signal, and X(2πf) = F{x(t)}(2πf)
+    be the Fourier Transform of that signal. By Parseval's Theorem,
+
+        ∫x(t)^2 dt = ∫|X(2πf)|^2 df
+
+    (see https://en.wikipedia.org/wiki/Parseval%27s_theorem#Notation_used_in_physics)
+
+    Rewriting the right side of that equation in the discrete form becomes
+
+        ∫x(t)^2 dt ≈ ∑ |X[k]|^2 • ∆f
+
+    where ∆f = fs/N = (1/∆t) / N = 1/T.
+    Limiting the right side to a range of discrete frequencies (k_0, k_1):
+
+        ∫x(t)^2 dt ≈ [∑; k=k_0 -> k≤k_1] |X[k]|^2 • ∆f
+
+    The VC curve calculation is the RMS over the time-domain. If T is the
+    duration of the time-domain signal, then:
+
+        √((1/T) ∫x(t)^2 dt)
+            ≈ √((1/T) [∑; k=k_0 -> k≤k_1] |X[k]|^2 • ∆f)
+            = ∆f • √([∑; k=k_0 -> k≤k_1] |X[k]|^2)
+
+    If the time-series data is acceleration, then the signal needs to first
+    be integrated into velocity. This can be done in the frequency domain
+    by replacing |X(2πf)|^2 with (1/2πf)^2 |X(2πf)|^2.
+    """
+    f, v_psd = differentiate(f, psd, n=-1)
+    f_oct, v_psd_oct = to_octave(
+        f,
+        v_psd,
+        fstart=fstart,  # Hz
+        octave_bins=octave_bins,
+        agg=np.sum,
+        axis=axis,
+    )
+
+    return namedtuple('VCCurveResults', "freqs, values")(
+        freqs=f_oct,
+        values=np.sqrt(f[1] * v_psd_oct),  # the PSD must already scale by ∆f?
     )
