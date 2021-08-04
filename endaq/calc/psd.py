@@ -5,6 +5,9 @@ import numpy as np
 import scipy.signal
 
 
+SpectrumStruct = namedtuple("SpectrumStruct", "freqs, values")
+
+
 def _np_histogram_nd(array, bins=10, weights=None, axis=-1, **kwargs):
     """Compute histograms over a specified axis."""
     array = np.asarray(array)
@@ -65,7 +68,7 @@ def differentiate(f, psd, n=1):
     if n < 0:
         factor[f == 0] = 0
 
-    return f, psd * factor
+    return SpectrumStruct(freqs=f, values=psd * factor)
 
 
 def to_jagged(f, psd, freq_splits, axis=-1, agg="sum"):
@@ -123,7 +126,7 @@ def to_jagged(f, psd, freq_splits, axis=-1, agg="sum"):
 
     f = (freq_splits[1:] + freq_splits[:-1]) / 2
 
-    return namedtuple("JaggedPSDResults", "center_freqs, values")(f, psd_jagged)
+    return SpectrumStruct(freqs=f, values=psd_jagged)
 
 
 def to_octave(f, psd, fstart=1, octave_bins=12, **kwargs):
@@ -143,9 +146,10 @@ def to_octave(f, psd, fstart=1, octave_bins=12, **kwargs):
     )
     assert len(center_freqs) + 1 == len(freq_splits)
 
-    return namedtuple("OctavePSDResults", "center_freqs, values")(
-        center_freqs,
-        to_jagged(f, psd, freq_splits=freq_splits, **kwargs).values,
+    return SpectrumStruct(
+        freqs=center_freqs,
+        values=to_jagged(f, psd, freq_splits=freq_splits, **kwargs).values,
+    )
 
 
 def vc_curves(f, psd, fstart=1, octave_bins=12, axis=-1):
@@ -191,7 +195,7 @@ def vc_curves(f, psd, fstart=1, octave_bins=12, axis=-1):
         axis=axis,
     )
 
-    return namedtuple('VCCurveResults', "freqs, values")(
+    return SpectrumStruct(
         freqs=f_oct,
         values=np.sqrt(f[1] * v_psd_oct),  # the PSD must already scale by ∆f?
     )
