@@ -58,7 +58,7 @@ def test_to_jagged_modes(psd_array, freq_diffs, agg1, agg2):
 
 def test_to_jagged_mode_times():
     setup = """
-from nre_utils.calc import psd
+from endaq.calc import psd
 import numpy as np
 
 n = 10 ** 4
