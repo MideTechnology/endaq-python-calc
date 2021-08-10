@@ -1,20 +1,14 @@
-import pytest
 import hypothesis as hyp
 import hypothesis.strategies as hyp_st
 import hypothesis.extra.numpy as hyp_np
 import numpy as np
 
-import itertools
-
 from endaq.calc import shock
 
 
-@pytest.mark.parametrize(
-    "freq, damp",
-    itertools.product(
-        [100, 300, 500, 1000],
-        [0.0, 0.05, 0.5],
-    ),
+@hyp.given(
+    freq=hyp_st.floats(12.5, 1000, allow_nan=False),
+    damp=hyp_st.floats(0, 1, exclude_max=True, allow_nan=False),
 )
 def test_rel_displ(freq, damp):
     """
@@ -61,7 +55,7 @@ def test_rel_displ(freq, damp):
             1e-20, 1e20, allow_nan=False, allow_infinity=False, exclude_min=True
         ),
     ),
-    damp=hyp_st.floats(0, 0.2, exclude_max=True),
+    damp=hyp_st.floats(0, 0.2, exclude_max=True, allow_nan=False),
 )
 def test_half_sine_shock_envelope(accel_pvss, damp):
     n = len(accel_pvss)
