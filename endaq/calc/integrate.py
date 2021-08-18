@@ -10,7 +10,7 @@ from . import filters
 
 def _integrate(array, dt, axis=-1):
     """Integrate data over an axis."""
-    result = scipy.integrate.cumtrapz(array, dx=dt, initial=0, axis=axis)
+    result = scipy.integrate.cumulative_trapezoid(array, dx=dt, initial=0, axis=axis)
     # In lieu of explicit initial offset, set integration bias to remove mean
     # -> avoids trend artifacts after successive integrations
     result = result - result.mean(axis=axis, keepdims=True)
