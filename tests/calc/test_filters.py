@@ -16,7 +16,7 @@ def test_highpass():
     assert np.allclose(np.abs(Fx), 1)
 
     # Generate output data
-    x_filt = filters.highpass(x, fs=fs, cutoff=fs_cutoff)
+    x_filt = filters.bandpass(x, fs=fs, low_cutoff=fs_cutoff, high_cutoff=None)
     assert x_filt.shape == x.shape
 
     # Validate output data
