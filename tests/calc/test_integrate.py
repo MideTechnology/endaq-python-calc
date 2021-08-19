@@ -31,5 +31,6 @@ def test_integrals():
     calc_result = integrate.integrals(array, dt, n=2, axis=-1)
 
     assert len(calc_result) == 3
+    assert np.all(calc_result[0] == array)
     for dx_dt, x in zip(calc_result[:-1], calc_result[1:]):
         assert np.all(x == integrate._integrate(dx_dt, dt, axis=-1))
