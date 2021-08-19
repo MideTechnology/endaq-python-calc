@@ -2,7 +2,6 @@ from collections import namedtuple
 import warnings
 
 import numpy as np
-import scipy.signal
 
 
 SpectrumStruct = namedtuple("SpectrumStruct", "freqs, values")
