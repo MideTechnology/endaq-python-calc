@@ -5,6 +5,7 @@ with open('README.rst', 'r', encoding='utf-8') as fh:
 
 INSTALL_REQUIRES = [
     "numpy",
+    "pandas",
     "scipy",
     ]
 
