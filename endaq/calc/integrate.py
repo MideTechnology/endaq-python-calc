@@ -23,7 +23,7 @@ def iter_integrals(array, dt, axis=-1, highpass_cutoff=1.0, filter_half_order=3)
     array = filters.bandpass(
         array,
         fs=1 / dt,
-        half_order=3,
+        half_order=filter_half_order,
         low_cutoff=highpass_cutoff,
         high_cutoff=None,
         axis=axis,
