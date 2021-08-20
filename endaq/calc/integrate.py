@@ -21,7 +21,12 @@ def _integrate(array, dt, axis=-1):
 def iter_integrals(array, dt, axis=-1, highpass_cutoff=1.0, filter_half_order=3):
     """Iterate over conditioned integrals of the given original data."""
     array = filters.bandpass(
-        array, fs=1 / dt, half_order=3, low_cutoff=highpass_cutoff, axis=axis
+        array,
+        fs=1 / dt,
+        half_order=3,
+        low_cutoff=highpass_cutoff,
+        high_cutoff=None,
+        axis=axis,
     )
     while True:
         array.setflags(write=False)  # should NOT mutate shared data
