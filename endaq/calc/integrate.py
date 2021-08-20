@@ -18,7 +18,7 @@ def _integrate(array, dt, axis=-1):
     return result
 
 
-def iter_integrals(array, dt, axis=-1, highpass_cutoff=1.0, filter_half_order=3):
+def iter_integrals(array, dt, axis=-1, highpass_cutoff=None, filter_half_order=3):
     """Iterate over conditioned integrals of the given original data."""
     array = filters.bandpass(
         array,
