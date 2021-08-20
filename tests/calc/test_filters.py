@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from endaq.calc import filters
 
@@ -16,7 +17,17 @@ def test_highpass():
     assert np.allclose(np.abs(Fx), 1)
 
     # Generate output data
-    x_filt = filters.butterworth(x, fs=fs, low_cutoff=fs_cutoff, high_cutoff=None)
+    x_filt = (
+        filters.butterworth(
+            pd.DataFrame(
+                x, index=(np.arange(len(x)) / fs) * np.timedelta64(10 ** 9, "ns")
+            ),
+            low_cutoff=fs_cutoff,
+            high_cutoff=None,
+        )
+        .to_numpy()
+        .flatten()
+    )
     assert x_filt.shape == x.shape
 
     # Validate output data
