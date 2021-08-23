@@ -1,3 +1,4 @@
+from collections import namedtuple
 import timeit
 
 import pytest
@@ -88,3 +89,52 @@ freq_splits = f[1:-1]
     print(f"direct form time: {t_direct}")
     print(f"histogram time: {t_hist}")
     assert t_hist < t_direct
+
+
+TestStruct = namedtuple("TestStruct", "f, array, agg, expt_f, expt_array")
+
+
+@pytest.mark.parametrize(
+    ", ".join(TestStruct._fields),
+    [
+        TestStruct(
+            f=list(range(8)),
+            array=[1, 0, 0, 0, 0, 0, 0, 0],
+            agg="sum",
+            expt_f=[1, 2, 4, 8],
+            expt_array=[0, 0, 0, 0],
+        ),
+        TestStruct(
+            f=list(range(8)),
+            array=[0, 1, 0, 0, 0, 0, 0, 0],
+            agg="sum",
+            expt_f=[1, 2, 4, 8],
+            expt_array=[1, 0, 0, 0],
+        ),
+        TestStruct(
+            f=list(range(8)),
+            array=[0, 0, 1, 0, 0, 0, 0, 0],
+            agg="sum",
+            expt_f=[1, 2, 4, 8],
+            expt_array=[0, 1, 0, 0],
+        ),
+        TestStruct(
+            f=list(range(8)),
+            array=[0, 0, 0, 1, 1, 1, 0, 0],
+            agg="sum",
+            expt_f=[1, 2, 4, 8],
+            expt_array=[0, 0, 3, 0],
+        ),
+        TestStruct(
+            f=list(range(8)),
+            array=[0, 0, 0, 0, 0, 0, 1, 1],
+            agg="sum",
+            expt_f=[1, 2, 4, 8],
+            expt_array=[0, 0, 0, 2],
+        ),
+    ],
+)
+def test_to_octave(f, array, agg, expt_f, expt_array):
+    calc_f, calc_array = psd.to_octave(f, array, fstart=1, octave_bins=1, agg=agg)
+    assert calc_f.tolist() == expt_f
+    assert calc_array.tolist() == expt_array

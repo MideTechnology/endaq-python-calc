@@ -82,6 +82,8 @@ def to_jagged(f, psd, freq_splits, axis=-1, agg="sum"):
         the PSD's area-under-the-curve, 'sum' preserves the PSD's "energy"
     """
     f = np.asarray(f)
+    psd = np.asarray(psd)
+    freq_splits = np.asarray(freq_splits)
     if f.ndim != 1 or not np.all(np.diff(freq_splits, prepend=0) > 0):
         raise ValueError
 
@@ -130,17 +132,18 @@ def to_jagged(f, psd, freq_splits, axis=-1, agg="sum"):
 
 def to_octave(f, psd, fstart=1, octave_bins=12, **kwargs):
     """Calculate a periodogram over log-spaced frequency bins."""
+    f = np.asarray(f)
     max_f = f.max()
 
     octave_step = 1 / octave_bins
     center_freqs = 2 ** np.arange(
         np.log2(fstart),
-        np.log2(max_f) - octave_step / 2,
+        np.log2(max_f) + octave_step / 2,
         octave_step,
     )
     freq_splits = 2 ** np.arange(
         np.log2(fstart) - octave_step / 2,
-        np.log2(max_f),
+        np.log2(max_f) + octave_step,
         octave_step,
     )
     assert len(center_freqs) + 1 == len(freq_splits)
