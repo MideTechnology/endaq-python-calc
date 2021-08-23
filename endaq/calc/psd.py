@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-from collections import namedtuple
 import warnings
 
 import numpy as np
 import pandas as pd
-
-
-SpectrumStruct = namedtuple("SpectrumStruct", "freqs, values")
+import scipy.signal
 
 
 def _np_histogram_nd(array, bins=10, weights=None, axis=-1, **kwargs):
@@ -61,6 +58,16 @@ def _np_histogram_nd(array, bins=10, weights=None, axis=-1, **kwargs):
     return result
 
 
+def welch(df: pd.DataFrame, *args, **kwargs) -> pd.DataFrame:
+    """Perform `scipy.signal.welch` on a dataframe."""
+    dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
+    if isinstance(dt, (np.timedelta64, pd.Timedelta)):
+        dt = dt / np.timedelta64(1, "s")
+
+    f, psd = scipy.signal.welch(df, fs=1 / dt, *args, **kwargs)
+    return pd.DataFrame(psd, index=f, columns=df.columns)
+
+
 def differentiate(df: pd.DataFrame, n: float = 1) -> pd.DataFrame:
     """Perform time-domain differentiation on periodogram data."""
     # Involves a division by zero for n < 0
@@ -73,7 +80,7 @@ def differentiate(df: pd.DataFrame, n: float = 1) -> pd.DataFrame:
     return df * factor[..., np.newaxis]
 
 
-def to_jagged(df: pd.DataFrame, freq_splits: np.array, agg="sum"):
+def to_jagged(df: pd.DataFrame, freq_splits: np.array, agg="sum") -> pd.DataFrame:
     """
     Calculate a periodogram over non-uniformly spaced frequency bins.
 
@@ -128,7 +135,9 @@ def to_jagged(df: pd.DataFrame, freq_splits: np.array, agg="sum"):
     )
 
 
-def to_octave(df: pd.DataFrame, fstart: float = 1, octave_bins: float = 12, **kwargs):
+def to_octave(
+    df: pd.DataFrame, fstart: float = 1, octave_bins: float = 12, **kwargs
+) -> pd.DataFrame:
     """Calculate a periodogram over log-spaced frequency bins."""
     max_f = df.index.max()
 
@@ -145,13 +154,14 @@ def to_octave(df: pd.DataFrame, fstart: float = 1, octave_bins: float = 12, **kw
     )
     assert len(center_freqs) + 1 == len(freq_splits)
 
-    return SpectrumStruct(
-        freqs=center_freqs,
-        values=to_jagged(df, freq_splits=freq_splits, **kwargs).values,
-    )
+    result = to_jagged(df, freq_splits=freq_splits, **kwargs)
+    result.index = center_freqs
+    return result
 
 
-def vc_curves(f, psd, fstart=1, octave_bins=12, axis=-1):
+def vc_curves(
+    df: pd.DataFrame, fstart: float = 1, octave_bins: float = 12
+) -> pd.DataFrame:
     """
     Calculate Vibration Criterion (VC) curves from an acceration periodogram.
 
@@ -184,17 +194,14 @@ def vc_curves(f, psd, fstart=1, octave_bins=12, axis=-1):
     be integrated into velocity. This can be done in the frequency domain
     by replacing |X(2πf)|^2 with (1/2πf)^2 |X(2πf)|^2.
     """
-    f, v_psd = differentiate(f, psd, n=-1)
-    f_oct, v_psd_oct = to_octave(
-        f,
-        v_psd,
+    df_vel = differentiate(df, n=-1)
+    df_vel_oct = to_octave(
+        df_vel,
         fstart=fstart,  # Hz
         octave_bins=octave_bins,
         agg=np.sum,
-        axis=axis,
     )
 
-    return SpectrumStruct(
-        freqs=f_oct,
-        values=np.sqrt(f[1] * v_psd_oct),  # the PSD must already scale by ∆f?
-    )
+    # The PSD must already scale by ∆f -> need only scale by √∆f?
+    # TODO make `density` parameter, scale differently depending on mode
+    return np.sqrt(df.index[1]) * df_vel_oct.apply(np.sqrt)
