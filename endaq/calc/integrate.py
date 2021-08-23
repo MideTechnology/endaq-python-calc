@@ -50,10 +50,8 @@ def integrals(
     """
     Calculate `n` integrations of the given data.
 
-    :param array: the data to integrate
-    :param dt: the time between adjacent samples; assumes a uniform sampling rate
+    :param df: the data to integrate, indexed with timestamps
     :param n: the number of integrals to calculate
-    :param axis: the axis of `array` over which to integrate
     :param highpass_cutoff: the cutoff frequency for the initial highpass filter;
         this is used to remove artifacts caused by DC trends
     :return: a length `n+1` list of the kth order integrals from 0 to n (inclusive)
