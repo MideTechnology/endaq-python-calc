@@ -23,7 +23,7 @@ def _integrate(df: pd.DataFrame) -> pd.DataFrame:
     )
     # In lieu of explicit initial offset, set integration bias to remove mean
     # -> avoids trend artifacts after successive integrations
-    result = result - result.mean(axis=0, keepdims=True)
+    result = result - result.to_numpy().mean(axis=0, keepdims=True)
 
     return result
 
