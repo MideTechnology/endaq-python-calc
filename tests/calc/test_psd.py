@@ -21,17 +21,18 @@ from endaq.calc import psd
             allow_infinity=False,
         ),
     ),
-    freq_diffs=hyp_np.arrays(
+    freq_splits=hyp_np.arrays(
         dtype=np.float64,
         shape=(8,),
         elements=hyp_st.floats(
             0,
-            20,
+            200,
             allow_nan=False,
             allow_infinity=False,
             exclude_min=True,
         ),
-    ),
+        unique=True,
+    ).map(lambda array: np.sort(array)),
 )
 @pytest.mark.parametrize(
     "agg1, agg2",
@@ -40,12 +41,10 @@ from endaq.calc import psd
         ("sum", np.sum),
     ],
 )
-def test_to_jagged_modes(psd_array, freq_diffs, agg1, agg2):
+def test_to_jagged_modes(psd_array, freq_splits, agg1, agg2):
     """Test `to_jagged(..., mode='mean')` against the equivalent `mode=np.mean`."""
     axis = 0
     f = np.arange(psd_array.shape[axis]) * 10
-    freq_splits = np.cumsum(freq_diffs)
-    hyp.assume(np.all(np.diff(freq_splits, prepend=0) > 0))
 
     result1 = psd.to_jagged(f, psd_array, freq_splits, axis=axis, agg=agg1).values
     result2 = psd.to_jagged(f, psd_array, freq_splits, axis=axis, agg=agg2).values
