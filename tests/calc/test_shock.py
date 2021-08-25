@@ -65,7 +65,7 @@ def test_rel_displ(freq, damp):
         shape=(40,),
         elements=hyp_st.floats(1e-20, 1e20),
     ).map(lambda array: pd.DataFrame(array, index=np.arange(40) * 1e-4)),
-    freq=hyp_st.floats(250, 1000),
+    freq=hyp_st.floats(1, 20),
     damp=hyp_st.floats(0, 1, exclude_max=True),
 )
 def test_pseudo_velocity_inversion(df_accel, freq, damp):
@@ -88,6 +88,9 @@ def test_half_sine_shock_envelope(df_pvss, damp):
     hyp.note(f"pulse amplitude: {ampl}")
     hyp.note(f"pulse duration: {T}")
 
+    ampl = ampl[0]
+    T = T[0]
+
     dt = min(
         1 / (2 * df_pvss.index[-1]), T / 20
     )  # guarantee sufficient # of samples to represent pulse
@@ -96,7 +99,7 @@ def test_half_sine_shock_envelope(df_pvss, damp):
     pulse = np.zeros_like(times)
     pulse[: int(T * fs)] = ampl * np.sin((np.pi / T) * times[: int(T * fs)])
     pulse_pvss = shock.pseudo_velocity(
-        pd.DataFrame(pulse, index=df_pvss.index), damp=damp
+        pd.DataFrame(pulse, index=times), freqs=df_pvss.index, damp=damp
     )
 
     # This is an approximation -> give the result a fudge-factor for correctness
