@@ -45,6 +45,9 @@ def test_to_jagged_modes(psd_df, freq_splits, agg1, agg2):
     )
 
 
+@pytest.mark.skip(
+    reason="timing test -> does not enforce functionality; takes too long"
+)
 def test_to_jagged_mode_times():
     """
     Check that a situation exists where the histogram method is more
