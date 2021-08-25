@@ -1,5 +1,5 @@
-import filters
-import integrate
-import psd
-import shock
-import stats
+from . import filters
+from . import integrate
+from . import psd
+from . import shock
+from . import stats
