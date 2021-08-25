@@ -61,8 +61,8 @@ def test_rel_displ(freq, damp):
 def test_pseudo_velocity_inversion(accel, freq, damp):
     fs = 10 ** 4
     assert shock.pseudo_velocity(
-        accel, fs, dt=1 / fs, damp=damp
-    ) == shock.pseudo_velocity(-accel, fs, dt=1 / fs, damp=damp)
+        accel, freq, dt=1 / fs, damp=damp
+    ) == shock.pseudo_velocity(-accel, freq, dt=1 / fs, damp=damp)
 
 
 @hyp.given(
