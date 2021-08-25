@@ -1,3 +1,4 @@
+import pytest
 import hypothesis as hyp
 import hypothesis.strategies as hyp_st
 import hypothesis.extra.numpy as hyp_np
@@ -36,7 +37,8 @@ def test_rel_displ(freq, damp):
 
     # Calculate expected result
     t = np.arange(1, 801) / fs
-    atten = omega * (-damp + 1j * np.sqrt(1 - damp ** 2))
+    atten = omega * np.exp(1j * np.arccos(-damp))
+    assert np.real(atten) == pytest.approx(-omega * damp)
 
     expt_result = np.zeros_like(signal)
     expt_result[200:] = (-1 / np.imag(atten)) * np.imag(
@@ -45,6 +47,22 @@ def test_rel_displ(freq, damp):
 
     # Test results
     assert np.allclose(calc_result, expt_result)
+
+
+@hyp.given(
+    accel=hyp_np.arrays(
+        dtype=np.float64,
+        shape=(40,),
+        elements=hyp_st.floats(1e-20, 1e20, allow_nan=False, allow_infinity=False),
+    ),
+    freq=hyp_st.floats(250, 1000, allow_nan=False),
+    damp=hyp_st.floats(0, 1, exclude_max=True, allow_nan=False),
+)
+def test_pseudo_velocity_inversion(accel, freq, damp):
+    fs = 10 ** 4
+    assert shock.pseudo_velocity(
+        accel, fs, dt=1 / fs, damp=damp
+    ) == shock.pseudo_velocity(-accel, fs, dt=1 / fs, damp=damp)
 
 
 @hyp.given(
