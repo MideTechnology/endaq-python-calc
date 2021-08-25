@@ -20,7 +20,7 @@ def _integrate(array, dt, axis=-1):
 
 def iter_integrals(array, dt, axis=-1, highpass_cutoff=None, filter_half_order=3):
     """Iterate over conditioned integrals of the given original data."""
-    array = filters.bandpass(
+    array = filters.butterworth(
         array,
         fs=1 / dt,
         half_order=filter_half_order,

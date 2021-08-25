@@ -6,7 +6,7 @@ import numpy as np
 import scipy.signal
 
 
-def bandpass(
+def butterworth(
     array: np.ndarray,
     fs: float,
     low_cutoff: Optional[float] = 1.0,
