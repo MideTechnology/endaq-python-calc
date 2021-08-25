@@ -15,7 +15,7 @@ def butterworth(
     axis: int = -1,
 ) -> np.ndarray:
     """
-    Apply a lowpass and/or a highpass filter to an array.
+    Apply a lowpass and/or a highpass Butterworth filter to an array.
 
     This function uses Butterworth filter designs, and implements the filter(s)
     as bi-directional digital biquad filters, split into second-order sections.
