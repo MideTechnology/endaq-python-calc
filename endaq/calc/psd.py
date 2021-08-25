@@ -131,7 +131,7 @@ def to_jagged(df: pd.DataFrame, freq_splits: np.array, agg="sum") -> pd.DataFram
     return pd.DataFrame(
         psd_jagged,
         index=(freq_splits[1:] + freq_splits[:-1]) / 2,
-        colums=df.columns,
+        columns=df.columns,
     )
 
 
