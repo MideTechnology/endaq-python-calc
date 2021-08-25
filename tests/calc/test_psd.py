@@ -1,3 +1,4 @@
+from collections import namedtuple
 import timeit
 
 import pytest
@@ -13,24 +14,14 @@ from endaq.calc import psd
     psd_array=hyp_np.arrays(
         dtype=np.float64,
         shape=(20, 3),
-        elements=hyp_st.floats(
-            0,
-            1e20,
-            allow_nan=False,
-            allow_infinity=False,
-        ),
+        elements=hyp_st.floats(0, 1e20),
     ),
-    freq_diffs=hyp_np.arrays(
+    freq_splits=hyp_np.arrays(
         dtype=np.float64,
         shape=(8,),
-        elements=hyp_st.floats(
-            0,
-            20,
-            allow_nan=False,
-            allow_infinity=False,
-            exclude_min=True,
-        ),
-    ),
+        elements=hyp_st.floats(0, 200, exclude_min=True),
+        unique=True,
+    ).map(lambda array: np.sort(array)),
 )
 @pytest.mark.parametrize(
     "agg1, agg2",
@@ -39,12 +30,10 @@ from endaq.calc import psd
         ("sum", np.sum),
     ],
 )
-def test_to_jagged_modes(psd_array, freq_diffs, agg1, agg2):
+def test_to_jagged_modes(psd_array, freq_splits, agg1, agg2):
     """Test `to_jagged(..., mode='mean')` against the equivalent `mode=np.mean`."""
     axis = 0
     f = np.arange(psd_array.shape[axis]) * 10
-    freq_splits = np.cumsum(freq_diffs)
-    hyp.assume(np.all(np.diff(freq_splits, prepend=0) > 0))
 
     result1 = psd.to_jagged(f, psd_array, freq_splits, axis=axis, agg=agg1).values
     result2 = psd.to_jagged(f, psd_array, freq_splits, axis=axis, agg=agg2).values
@@ -57,6 +46,10 @@ def test_to_jagged_modes(psd_array, freq_diffs, agg1, agg2):
 
 
 def test_to_jagged_mode_times():
+    """
+    Check that a situation exists where the histogram method is more
+    performant.
+    """
     setup = """
 from endaq.calc import psd
 import numpy as np
@@ -84,3 +77,52 @@ freq_splits = f[1:-1]
     print(f"direct form time: {t_direct}")
     print(f"histogram time: {t_hist}")
     assert t_hist < t_direct
+
+
+TestStruct = namedtuple("TestStruct", "f, array, agg, expt_f, expt_array")
+
+
+@pytest.mark.parametrize(
+    ", ".join(TestStruct._fields),
+    [
+        TestStruct(
+            f=list(range(8)),
+            array=[1, 0, 0, 0, 0, 0, 0, 0],
+            agg="sum",
+            expt_f=[1, 2, 4, 8],
+            expt_array=[0, 0, 0, 0],
+        ),
+        TestStruct(
+            f=list(range(8)),
+            array=[0, 1, 0, 0, 0, 0, 0, 0],
+            agg="sum",
+            expt_f=[1, 2, 4, 8],
+            expt_array=[1, 0, 0, 0],
+        ),
+        TestStruct(
+            f=list(range(8)),
+            array=[0, 0, 1, 0, 0, 0, 0, 0],
+            agg="sum",
+            expt_f=[1, 2, 4, 8],
+            expt_array=[0, 1, 0, 0],
+        ),
+        TestStruct(
+            f=list(range(8)),
+            array=[0, 0, 0, 1, 1, 1, 0, 0],
+            agg="sum",
+            expt_f=[1, 2, 4, 8],
+            expt_array=[0, 0, 3, 0],
+        ),
+        TestStruct(
+            f=list(range(8)),
+            array=[0, 0, 0, 0, 0, 0, 1, 1],
+            agg="sum",
+            expt_f=[1, 2, 4, 8],
+            expt_array=[0, 0, 0, 2],
+        ),
+    ],
+)
+def test_to_octave(f, array, agg, expt_f, expt_array):
+    calc_f, calc_array = psd.to_octave(f, array, fstart=1, octave_bins=1, agg=agg)
+    assert calc_f.tolist() == expt_f
+    assert calc_array.tolist() == expt_array

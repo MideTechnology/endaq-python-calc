@@ -1,3 +1,4 @@
+import pytest
 import hypothesis as hyp
 import hypothesis.strategies as hyp_st
 import hypothesis.extra.numpy as hyp_np
@@ -7,8 +8,8 @@ from endaq.calc import shock
 
 
 @hyp.given(
-    freq=hyp_st.floats(12.5, 1000, allow_nan=False),
-    damp=hyp_st.floats(0, 1, exclude_max=True, allow_nan=False),
+    freq=hyp_st.floats(12.5, 1000),
+    damp=hyp_st.floats(0, 1, exclude_max=True),
 )
 def test_rel_displ(freq, damp):
     """
@@ -36,7 +37,8 @@ def test_rel_displ(freq, damp):
 
     # Calculate expected result
     t = np.arange(1, 801) / fs
-    atten = omega * (-damp + 1j * np.sqrt(1 - damp ** 2))
+    atten = omega * np.exp(1j * np.arccos(-damp))
+    assert np.real(atten) == pytest.approx(-omega * damp)
 
     expt_result = np.zeros_like(signal)
     expt_result[200:] = (-1 / np.imag(atten)) * np.imag(
@@ -48,14 +50,24 @@ def test_rel_displ(freq, damp):
 
 
 @hyp.given(
-    accel_pvss=hyp_np.arrays(
-        dtype=np.float64,
-        shape=(40,),
-        elements=hyp_st.floats(
-            1e-20, 1e20, allow_nan=False, allow_infinity=False, exclude_min=True
-        ),
+    accel=hyp_np.arrays(
+        dtype=np.float64, shape=(40,), elements=hyp_st.floats(1e-20, 1e20)
     ),
-    damp=hyp_st.floats(0, 0.2, exclude_max=True, allow_nan=False),
+    freq=hyp_st.floats(250, 1000),
+    damp=hyp_st.floats(0, 1, exclude_max=True),
+)
+def test_pseudo_velocity_inversion(accel, freq, damp):
+    fs = 10 ** 4
+    assert shock.pseudo_velocity(
+        accel, freq, dt=1 / fs, damp=damp
+    ) == shock.pseudo_velocity(-accel, freq, dt=1 / fs, damp=damp)
+
+
+@hyp.given(
+    accel_pvss=hyp_np.arrays(
+        dtype=np.float64, shape=(40,), elements=hyp_st.floats(1e-20, 1e20)
+    ),
+    damp=hyp_st.floats(0, 0.2),
 )
 def test_half_sine_shock_envelope(accel_pvss, damp):
     n = len(accel_pvss)

@@ -11,6 +11,7 @@ INSTALL_REQUIRES = [
 TEST_REQUIRES = [
     "pytest",
     "hypothesis",
+    "sympy",
     ]
 
 EXAMPLE_REQUIRES = [
