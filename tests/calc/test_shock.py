@@ -8,8 +8,8 @@ from endaq.calc import shock
 
 
 @hyp.given(
-    freq=hyp_st.floats(12.5, 1000, allow_nan=False),
-    damp=hyp_st.floats(0, 1, exclude_max=True, allow_nan=False),
+    freq=hyp_st.floats(12.5, 1000),
+    damp=hyp_st.floats(0, 1, exclude_max=True),
 )
 def test_rel_displ(freq, damp):
     """
@@ -51,12 +51,10 @@ def test_rel_displ(freq, damp):
 
 @hyp.given(
     accel=hyp_np.arrays(
-        dtype=np.float64,
-        shape=(40,),
-        elements=hyp_st.floats(1e-20, 1e20, allow_nan=False, allow_infinity=False),
+        dtype=np.float64, shape=(40,), elements=hyp_st.floats(1e-20, 1e20)
     ),
-    freq=hyp_st.floats(250, 1000, allow_nan=False),
-    damp=hyp_st.floats(0, 1, exclude_max=True, allow_nan=False),
+    freq=hyp_st.floats(250, 1000),
+    damp=hyp_st.floats(0, 1, exclude_max=True),
 )
 def test_pseudo_velocity_inversion(accel, freq, damp):
     fs = 10 ** 4
@@ -67,13 +65,9 @@ def test_pseudo_velocity_inversion(accel, freq, damp):
 
 @hyp.given(
     accel_pvss=hyp_np.arrays(
-        dtype=np.float64,
-        shape=(40,),
-        elements=hyp_st.floats(
-            1e-20, 1e20, allow_nan=False, allow_infinity=False, exclude_min=True
-        ),
+        dtype=np.float64, shape=(40,), elements=hyp_st.floats(1e-20, 1e20)
     ),
-    damp=hyp_st.floats(0, 0.2, exclude_max=True, allow_nan=False),
+    damp=hyp_st.floats(0, 0.2),
 )
 def test_half_sine_shock_envelope(accel_pvss, damp):
     n = len(accel_pvss)

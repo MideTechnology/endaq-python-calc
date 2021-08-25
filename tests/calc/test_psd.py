@@ -14,23 +14,12 @@ from endaq.calc import psd
     psd_array=hyp_np.arrays(
         dtype=np.float64,
         shape=(20, 3),
-        elements=hyp_st.floats(
-            0,
-            1e20,
-            allow_nan=False,
-            allow_infinity=False,
-        ),
+        elements=hyp_st.floats(0, 1e20),
     ),
     freq_splits=hyp_np.arrays(
         dtype=np.float64,
         shape=(8,),
-        elements=hyp_st.floats(
-            0,
-            200,
-            allow_nan=False,
-            allow_infinity=False,
-            exclude_min=True,
-        ),
+        elements=hyp_st.floats(0, 200, exclude_min=True),
         unique=True,
     ).map(lambda array: np.sort(array)),
 )
