@@ -73,7 +73,7 @@ def differentiate(df: pd.DataFrame, n: float = 1) -> pd.DataFrame:
     # Involves a division by zero for n < 0
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
-        factor = (2 * np.pi * df.index) ** (2 * n)  # divide by zero
+        factor = (2 * np.pi * df.index.values) ** (2 * n)  # divide by zero
     if n < 0:
         factor[df.index == 0] = 0
 
