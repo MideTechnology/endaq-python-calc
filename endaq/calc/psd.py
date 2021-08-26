@@ -58,13 +58,13 @@ def _np_histogram_nd(array, bins=10, weights=None, axis=-1, **kwargs):
     return result
 
 
-def welch(df: pd.DataFrame, *args, **kwargs) -> pd.DataFrame:
+def scipy_welch(df: pd.DataFrame, *args, **kwargs) -> pd.DataFrame:
     """Perform `scipy.signal.welch` on a dataframe."""
     dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
     if isinstance(dt, (np.timedelta64, pd.Timedelta)):
         dt = dt / np.timedelta64(1, "s")
 
-    f, psd = scipy.signal.welch(df, fs=1 / dt, *args, **kwargs)
+    f, psd = scipy.signal.welch(df, 1 / dt, *args, axis=0, **kwargs)
     return pd.DataFrame(psd, index=f, columns=df.columns)
 
 
