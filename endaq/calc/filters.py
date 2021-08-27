@@ -12,7 +12,7 @@ def butterworth(
     low_cutoff: Optional[float] = 1.0,
     high_cutoff: Optional[float] = None,
     half_order: int = 3,
-) -> np.ndarray:
+) -> pd.DataFrame:
     """
     Apply a lowpass and/or a highpass Butterworth filter to an array.
 

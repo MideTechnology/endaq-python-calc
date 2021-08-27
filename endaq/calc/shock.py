@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Tuple
 from collections import namedtuple
 import functools
 import warnings
@@ -65,7 +66,10 @@ def pseudo_velocity(
     )
 
 
-def half_sine_shock_envelope(df_pvss: pd.DataFrame, damp: float = 0):
+def half_sine_shock_envelope(
+    df_pvss: pd.DataFrame,
+    damp: float = 0,
+) -> Tuple[pd.Series, pd.Series]:
     """Characterize a half-sine pulse whose PVSS envelopes the input."""
 
     def amp_factor_approx(damp):

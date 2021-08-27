@@ -46,7 +46,7 @@ def iter_integrals(
 
 def integrals(
     df: pd.DataFrame, n: int = 1, highpass_cutoff: Optional[float] = None
-) -> List[np.ndarray]:
+) -> List[pd.DataFrame]:
     """
     Calculate `n` integrations of the given data.
 
