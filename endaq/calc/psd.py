@@ -58,14 +58,19 @@ def _np_histogram_nd(array, bins=10, weights=None, axis=-1, **kwargs):
     return result
 
 
-def scipy_welch(df: pd.DataFrame, *args, **kwargs) -> pd.DataFrame:
-    """Perform `scipy.signal.welch` on a dataframe."""
+def welch(df: pd.DataFrame, bin_width: float = 1, **kwargs) -> pd.DataFrame:
+    """Perform `scipy.signal.welch` with a specified frequency spacing."""
     dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
     if isinstance(dt, (np.timedelta64, pd.Timedelta)):
         dt = dt / np.timedelta64(1, "s")
+    fs = 1 / dt
 
-    f, psd = scipy.signal.welch(df, 1 / dt, *args, axis=0, **kwargs)
-    return pd.DataFrame(psd, index=f, columns=df.columns)
+    freqs, psd = scipy.signal.welch(
+        df.values, fs=fs, nperseg=int(fs / bin_width), **kwargs, axis=0
+    )
+    df_psd = pd.DataFrame(psd, index=freqs, columns=df.columns)
+    df_psd.index.name = "Frequency (Hz)"
+    return df_psd
 
 
 def differentiate(df: pd.DataFrame, n: float = 1) -> pd.DataFrame:
