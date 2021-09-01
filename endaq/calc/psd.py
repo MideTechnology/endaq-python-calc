@@ -70,9 +70,9 @@ def welch(df: pd.DataFrame, bin_width: float = 1, **kwargs) -> pd.DataFrame:
     freqs, psd = scipy.signal.welch(
         df.values, fs=fs, nperseg=int(fs / bin_width), **kwargs, axis=0
     )
-    df_psd = pd.DataFrame(psd, index=freqs, columns=df.columns)
-    df_psd.index.name = "Frequency (Hz)"
-    return df_psd
+    return pd.DataFrame(
+        psd, index=pd.Series(freqs, name="frequency (Hz)"), columns=df.columns
+    )
 
 
 def differentiate(df: pd.DataFrame, n: float = 1) -> pd.DataFrame:
@@ -137,7 +137,7 @@ def to_jagged(df: pd.DataFrame, freq_splits: np.array, agg="sum") -> pd.DataFram
 
     return pd.DataFrame(
         psd_jagged,
-        index=(freq_splits[1:] + freq_splits[:-1]) / 2,
+        index=pd.Series((freq_splits[1:] + freq_splits[:-1]) / 2, name=df.index.name),
         columns=df.columns,
     )
 
@@ -162,7 +162,7 @@ def to_octave(
     assert len(center_freqs) + 1 == len(freq_splits)
 
     result = to_jagged(df, freq_splits=freq_splits, **kwargs)
-    result.index = center_freqs
+    result.index = pd.Series(center_freqs, name=df.index.name)
     return result
 
 
