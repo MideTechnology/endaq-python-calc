@@ -84,8 +84,8 @@ def test_pseudo_velocity_inversion(df_accel, freq, damp):
     damp=hyp_st.floats(0, 0.2),
 )
 @hyp.settings(deadline=None)  # this test tends to timeout
-def test_half_sine_shock_envelope(df_pvss, damp):
-    ampl, T = shock.half_sine_shock_envelope(df_pvss, damp=damp)
+def test_enveloping_half_sine(df_pvss, damp):
+    ampl, T = shock.enveloping_half_sine(df_pvss, damp=damp)
     hyp.note(f"pulse amplitude: {ampl}")
     hyp.note(f"pulse duration: {T}")
 

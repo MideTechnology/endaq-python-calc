@@ -68,7 +68,7 @@ def pseudo_velocity(
     )
 
 
-def half_sine_shock_envelope(
+def enveloping_half_sine(
     df_pvss: pd.DataFrame,
     damp: float = 0,
 ) -> Tuple[pd.Series, pd.Series]:
