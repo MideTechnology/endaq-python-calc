@@ -68,32 +68,38 @@ def pseudo_velocity(
     )
 
 
-def half_sine_shock_envelope(
+def enveloping_half_sine(
     df_pvss: pd.DataFrame,
     damp: float = 0,
 ) -> Tuple[pd.Series, pd.Series]:
     """Characterize a half-sine pulse whose PVSS envelopes the input."""
 
-    def amp_factor_approx(damp):
+    def amp_factor(damp):
         """
-        Approximate the PVSS amplitude attenuation on a half-sine pulse from the
+        Calculate the PVSS amplitude attenuation on a half-sine pulse from the
         damping coefficient.
 
         The PVSS of a half-sine pulse differs based on the damping coefficient
         used. While the high-frequency rolloff is relatively consistent, the
         flat low-frequency amplitude is attenuated at higher damping values.
-        This function approximates the attenuation for a given damping
+        This function calculates this attenuation for a given damping
         coefficient.
-
-        This approximation was derived via trial-and-error, and can likely be
-        improved to be (slightly) more optimal w/o extra complexity.
         """
-        return 1 / (1 + (np.e - 1) * damp ** 1.04)  # the 1.04 can be more optimal
+        # This calculates the PVSS value as ω->0. However, since it necessarily
+        # computes the maximum of a function *over time*, and ω is only found
+        # therein in the multiplicative factor (ωt), it is mathematically
+        # equivalent to compute this maximum for any arbitrary ω>0. Thus we
+        # choose ω=1 for convenience, w/o loss of generality.
+        a = np.exp(1j * np.arccos(-damp))  # = -damp + 1j * np.sqrt(1 - damp**2)
+        # From WolframAlpha: https://www.wolframalpha.com/input/?i=D%5BPower%5Be%2C%5C%2840%29-d+*t%5C%2841%29%5D+sin%5C%2840%29Sqrt%5B1-Power%5Bd%2C2%5D%5D*t%5C%2841%29%2Ct%5D+%3D+0&assumption=%22ListOrTimes%22+-%3E+%22Times%22&assumption=%7B%22C%22%2C+%22e%22%7D+-%3E+%7B%22NamedConstant%22%7D&assumption=%7B%22C%22%2C+%22d%22%7D+-%3E+%7B%22Variable%22%7D&assumption=%22UnitClash%22+-%3E+%7B%22d%22%2C+%7B%22Days%22%7D%7D
+        t_max = (2 / np.imag(a)) * np.arctan2(np.imag(a), 1 - np.real(a))
+        PVSS_max = (1 / np.imag(a)) * np.imag(np.exp(a * t_max))
+        return PVSS_max
 
     max_pvss = df_pvss.max()
     max_f_pvss = df_pvss.mul(df_pvss.index, axis=0).max()
 
     return namedtuple("HalfSinePulseParameters", "amplitude, period")(
         amplitude=2 * np.pi * max_f_pvss,
-        period=max_pvss / (4 * amp_factor_approx(damp) * max_f_pvss),
+        period=max_pvss / (4 * amp_factor(damp) * max_f_pvss),
     )
