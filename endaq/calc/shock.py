@@ -13,7 +13,7 @@ import scipy.signal
 
 
 def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
-    """Calculate the relative velocity for a SDOF system."""
+    """Calculate the relative displacement for a SDOF system."""
     # Generate the transfer function
     #   H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
     # for the PDE
