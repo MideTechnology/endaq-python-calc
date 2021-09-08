@@ -13,7 +13,7 @@ import scipy.signal
 
 
 def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
-    """Calculate the relative velocity for a SDOF system."""
+    """Calculate the relative displacement for a SDOF system."""
     # Generate the transfer function
     #   H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
     # for the PDE
@@ -59,12 +59,15 @@ def pseudo_velocity(
     if not two_sided:
         return pd.DataFrame(
             np.maximum(results[0], results[1]),
-            index=freqs,
+            index=pd.Series(freqs, name="frequency (Hz)"),
             columns=df.columns,
         )
 
     return namedtuple("PseudoVelocityResults", "neg pos")(
-        pd.DataFrame(r, index=freqs, columns=df.columns) for r in results
+        pd.DataFrame(
+            r, index=pd.Series(freqs, name="frequency (Hz)"), columns=df.columns
+        )
+        for r in results
     )
 
 
