@@ -91,7 +91,7 @@ def to_jagged(df: pd.DataFrame, freq_splits: np.array, agg="mean") -> pd.DataFra
     """
     Calculate a periodogram over non-uniformly spaced frequency bins.
 
-    :param f, psd: the returned values from `scipy.signal.welch`
+    :param df: the returned values from `endaq.calc.psd.welch`
     :param freq_splits: the boundaries of the frequency bins; must be strictly
         increasing
     :param axis: same as the axis parameter provided to `scipy.signal.welch`
