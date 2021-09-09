@@ -171,7 +171,8 @@ def vc_curves(
 ) -> pd.DataFrame:
     """
     Calculate Vibration Criterion (VC) curves from an acceration periodogram.
-
+    """
+    """
     # Theory behind the calculation
 
     Let x(t) be a real-valued time-domain signal, and X(2πf) = F{x(t)}(2πf)
