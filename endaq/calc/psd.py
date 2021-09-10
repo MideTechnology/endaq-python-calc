@@ -87,7 +87,7 @@ def differentiate(df: pd.DataFrame, n: float = 1) -> pd.DataFrame:
     return df * factor[..., np.newaxis]
 
 
-def to_jagged(df: pd.DataFrame, freq_splits: np.array, agg="sum") -> pd.DataFrame:
+def to_jagged(df: pd.DataFrame, freq_splits: np.array, agg="mean") -> pd.DataFrame:
     """
     Calculate a periodogram over non-uniformly spaced frequency bins.
 
