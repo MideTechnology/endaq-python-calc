@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import typing
 import warnings
 
 import numpy as np
@@ -87,7 +88,14 @@ def differentiate(df: pd.DataFrame, n: float = 1) -> pd.DataFrame:
     return df * factor[..., np.newaxis]
 
 
-def to_jagged(df: pd.DataFrame, freq_splits: np.array, agg="mean") -> pd.DataFrame:
+def to_jagged(
+    df: pd.DataFrame,
+    freq_splits: np.array,
+    agg: typing.Union[
+        typing.Literal["mean", "sum"],
+        typing.Callable[[np.ndarray, int], float],
+    ] = "mean",
+) -> pd.DataFrame:
     """
     Calculate a periodogram over non-uniformly spaced frequency bins.
 
