@@ -29,7 +29,7 @@ def _integrate(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def iter_integrals(
-    df: pd.DataFrame, highpass_cutoff=None, filter_half_order=3
+    df: pd.DataFrame, highpass_cutoff=None, filter_half_order=3, tukey_percent=0
 ) -> Iterable[pd.DataFrame]:
     """Iterate over conditioned integrals of the given original data."""
     df = filters.butterworth(
@@ -38,6 +38,10 @@ def iter_integrals(
         low_cutoff=highpass_cutoff,
         high_cutoff=None,
     )
+
+    if tukey_percent > 0:
+        tukey_window = scipy.signal.windows.tukey(len(df.index), alpha=tukey_percent)
+        df = df.mul(tukey_window, axis="rows")
 
     while True:
         yield df.copy()  # otherwise, edits to the yielded item would alter the results
