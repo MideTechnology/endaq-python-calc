@@ -49,7 +49,10 @@ def iter_integrals(
 
 
 def integrals(
-    df: pd.DataFrame, n: int = 1, highpass_cutoff: Optional[float] = None
+    df: pd.DataFrame,
+    n: int = 1,
+    highpass_cutoff: Optional[float] = None,
+    tukey_percent: float = 0,
 ) -> List[pd.DataFrame]:
     """
     Calculate `n` integrations of the given data.
@@ -68,6 +71,7 @@ def integrals(
                 df,
                 highpass_cutoff=highpass_cutoff,
                 filter_half_order=n // 2 + 1,  # ensures zero DC content in nth integral
+                tukey_percent=tukey_percent,
             ),
         )
     ]
