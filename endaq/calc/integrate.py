@@ -29,7 +29,10 @@ def _integrate(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def iter_integrals(
-    df: pd.DataFrame, highpass_cutoff=None, filter_half_order=3, tukey_percent=0
+    df: pd.DataFrame,
+    highpass_cutoff: Optional[float] = None,
+    filter_half_order: int = 3,
+    tukey_percent: float = 0,
 ) -> Iterable[pd.DataFrame]:
     """Iterate over conditioned integrals of the given original data."""
     df = filters.butterworth(

@@ -1,13 +1,27 @@
+from __future__ import annotations
+
+import typing  # for `SupportsIndex`, which is Python3.8+ only
+from typing import Union
+from collections.abc import Sequence
+
 import numpy as np
 import scipy.ndimage
 
 
-def L2_norm(data, axis=None, keepdims=False):
+def L2_norm(
+    data: np.ndarray,
+    axis: Union[None, typing.SupportsIndex, Sequence[typing.SupportsIndex]] = None,
+    keepdims: bool = False,
+):
     """Compute the L2 norm (a.k.a. the Euclidean Norm)."""
     return np.sqrt(np.sum(np.abs(data) ** 2, axis=axis, keepdims=keepdims))
 
 
-def max_abs(array, axis=None, keepdims=False):
+def max_abs(
+    array: np.ndarray,
+    axis: Union[None, typing.SupportsIndex, Sequence[typing.SupportsIndex]] = None,
+    keepdims: bool = False,
+):
     """
     Compute the maximum of the absolute value of an array.
 
@@ -31,12 +45,20 @@ def max_abs(array, axis=None, keepdims=False):
     )
 
 
-def rms(data, axis=None, keepdims=False):
+def rms(
+    data: np.ndarray,
+    axis: Union[None, typing.SupportsIndex, Sequence[typing.SupportsIndex]] = None,
+    keepdims: bool = False,
+):
     """Calculate the root-mean-square (RMS) along a given axis."""
     return np.sqrt(np.mean(np.abs(data) ** 2, axis=axis, keepdims=keepdims))
 
 
-def rolling_rms(array, nperseg=256, axis=-1):
+def rolling_rms(
+    array: np.ndarray,
+    nperseg: int = 256,
+    axis: typing.SupportsIndex = -1,
+):
     """Calculate a rolling RMS along a given axis."""
     sq = array ** 2
     window = np.ones(nperseg, dtype=array.dtype) / nperseg
