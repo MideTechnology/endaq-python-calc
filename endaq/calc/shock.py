@@ -38,7 +38,7 @@ def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
 
 def pseudo_velocity(
     df: pd.DataFrame,
-    freqs,
+    freqs: np.ndarray,
     damp: float = 0,
     two_sided: bool = False,
 ) -> pd.DataFrame:
