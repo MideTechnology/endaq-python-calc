@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import typing
 import warnings
 
 import numpy as np
@@ -87,11 +88,18 @@ def differentiate(df: pd.DataFrame, n: float = 1) -> pd.DataFrame:
     return df * factor[..., np.newaxis]
 
 
-def to_jagged(df: pd.DataFrame, freq_splits: np.array, agg="mean") -> pd.DataFrame:
+def to_jagged(
+    df: pd.DataFrame,
+    freq_splits: np.array,
+    agg: typing.Union[
+        typing.Literal["mean", "sum"],
+        typing.Callable[[np.ndarray, int], float],
+    ] = "mean",
+) -> pd.DataFrame:
     """
     Calculate a periodogram over non-uniformly spaced frequency bins.
 
-    :param f, psd: the returned values from `scipy.signal.welch`
+    :param df: the returned values from `endaq.calc.psd.welch`
     :param freq_splits: the boundaries of the frequency bins; must be strictly
         increasing
     :param axis: same as the axis parameter provided to `scipy.signal.welch`
@@ -171,7 +179,8 @@ def vc_curves(
 ) -> pd.DataFrame:
     """
     Calculate Vibration Criterion (VC) curves from an acceration periodogram.
-
+    """
+    """
     # Theory behind the calculation
 
     Let x(t) be a real-valued time-domain signal, and X(2πf) = F{x(t)}(2πf)
