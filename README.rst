@@ -4,7 +4,7 @@ enDAQ-calc - a computational backend for vibration analysis
 
 enDAQ-calc is a package comprising a collection of common calculations for vibration analysis. It leverages the standard Python scientific stack (NumPy, SciPy, Pandas) in order to enable engineers to perform domain-specific calculations in a few lines of code, without having to first master Python or its scientific stack in their entireties.
 
-enDAQ-calc is a sub-package of the larger enDAQ ecosystem. See the enDAQ package for more details.
+enDAQ-calc is a sub-package of the larger enDAQ ecosystem. See [the enDAQ package](https://github.com/MideTechnology/endaq-python) for more details.
 
 Installation
 ============
