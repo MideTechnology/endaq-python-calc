@@ -67,11 +67,12 @@ def test_rel_displ(freq, damp):
     ).map(lambda array: pd.DataFrame(array, index=np.arange(40) * 1e-4)),
     freq=hyp_st.floats(1, 20),
     damp=hyp_st.floats(0, 1, exclude_max=True),
+    factor=hyp_st.floats(-1e2, 1e2),
 )
-def test_pseudo_velocity_inversion(df_accel, freq, damp):
+def test_pseudo_velocity_linearity(df_accel, freq, damp, factor):
     pd.testing.assert_frame_equal(
-        shock.pseudo_velocity(df_accel, [freq], damp=damp),
-        shock.pseudo_velocity(-df_accel, [freq], damp=damp),
+        shock.pseudo_velocity(factor * df_accel, [freq], damp=damp),
+        (factor * shock.pseudo_velocity(df_accel, [freq], damp=damp)).abs(),
     )
 
 
