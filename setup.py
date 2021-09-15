@@ -11,6 +11,7 @@ INSTALL_REQUIRES = [
 
 TEST_REQUIRES = [
     "pytest",
+    "pytest-cov",
     "hypothesis",
     "sympy",
     ]
