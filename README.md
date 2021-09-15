@@ -6,7 +6,7 @@ enDAQ-calc is a sub-package of the larger enDAQ ecosystem. See [the enDAQ packag
 
 ## Installation
 
-enDAQ-calc is available on PYPI via `pip`::
+enDAQ-calc is available on PYPI via `pip`:
 
     pip install endaq-calc
 
