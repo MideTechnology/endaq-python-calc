@@ -25,11 +25,8 @@ import endaq.calc.shock
 
 ### Filters
 ``` python
-df_accel_hp = endaq.calc.filters.butterworth(df_accel, low_cutoff=1, high_cutoff=None)
-```
-
-``` python
-df_accel_lp = endaq.calc.filters.butterworth(df_accel, low_cutoff=None, high_cutoff=100)
+df_accel_highpass = endaq.calc.filters.butterworth(df_accel, low_cutoff=1, high_cutoff=None)
+df_accel_lowpass = endaq.calc.filters.butterworth(df_accel, low_cutoff=None, high_cutoff=100)
 ```
 
 ### Integration
@@ -52,7 +49,6 @@ df_accel_psd_oct = endaq.calc.psd.to_octave(df_accel_psd, fstart=1, octave_bins=
 #### Derivatives & Integrals {#derivatives--integrals}
 ``` python
 df_vel_psd = endaq.calc.psd.differentiate(df_accel_psd, n=-1)
-
 df_jerk_psd = endaq.calc.psd.differentiate(df_accel_psd, n=1)
 ```
 
