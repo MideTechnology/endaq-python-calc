@@ -23,7 +23,7 @@ setuptools.setup(
         version='1.0.0a1',
         author='Mide Technology',
         author_email='help@mide.com',
-        description='A comprehensive, user-centric Python API for working with enDAQ data and devices',
+        description='a computational backend for vibration analysis',
         long_description=long_description,
         long_description_content_type='text/markdown',
         url='https://github.com/MideTechnology/endaq-python',
