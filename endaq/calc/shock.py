@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 import scipy.signal
 
+from endaq.calc.stats import L2_norm
+
 
 def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
     """Calculate the relative displacement for a SDOF system."""
@@ -41,6 +43,7 @@ def pseudo_velocity(
     freqs: np.ndarray,
     damp: float = 0,
     two_sided: bool = False,
+    aggregate_axes: bool = False,
 ) -> pd.DataFrame:
     """The pseudo velocity of an acceleration signal."""
     freqs = np.asarray(freqs)
@@ -48,10 +51,15 @@ def pseudo_velocity(
         raise ValueError("target frequencies must be in a 1D-array")
     omega = 2 * np.pi * freqs
 
-    results = np.empty((2,) + freqs.shape + df.shape[1:], dtype=np.float64)
+    results = np.empty(
+        (2,) + freqs.shape + (() if aggregate_axes else df.shape[1:]),
+        dtype=np.float64,
+    )
 
     for i_nd in np.ndindex(freqs.shape):
         rd = rel_displ(df, omega[i_nd], damp)
+        if aggregate_axes:
+            rd = L2_norm(rd, axis=-1)
 
         results[(0,) + i_nd] = -omega[i_nd] * rd.min(axis=0)
         results[(1,) + i_nd] = omega[i_nd] * rd.max(axis=0)
