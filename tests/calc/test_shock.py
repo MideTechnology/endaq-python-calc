@@ -62,7 +62,7 @@ def test_rel_displ(freq, damp):
 @hyp.given(
     df_accel=hyp_np.arrays(
         dtype=np.float64,
-        shape=(40,),
+        shape=(40, 2),
         elements=hyp_st.floats(1e-20, 1e20),
     ).map(lambda array: pd.DataFrame(array, index=np.arange(40) * 1e-4)),
     freq=hyp_st.floats(1, 20),
@@ -79,7 +79,7 @@ def test_pseudo_velocity_linearity(df_accel, freq, damp, factor):
 @hyp.given(
     df_pvss=hyp_np.arrays(
         dtype=np.float64,
-        shape=(40,),
+        shape=(40, 2),
         elements=hyp_st.floats(1e-20, 1e20),
     ).map(lambda array: pd.DataFrame(array, index=np.arange(1, 41))),
     damp=hyp_st.floats(0, 0.2),
