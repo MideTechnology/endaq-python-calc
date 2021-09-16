@@ -46,6 +46,8 @@ def pseudo_velocity(
     aggregate_axes: bool = False,
 ) -> pd.DataFrame:
     """The pseudo velocity of an acceleration signal."""
+    if two_sided and aggregate_axes:
+        raise ValueError("cannot enable both options `two_sided` and `aggregate_axes`")
     freqs = np.asarray(freqs)
     if freqs.ndim != 1:
         raise ValueError("target frequencies must be in a 1D-array")
