@@ -68,11 +68,19 @@ def test_rel_displ(freq, damp):
     freq=hyp_st.floats(1, 20),
     damp=hyp_st.floats(0, 1, exclude_max=True),
     factor=hyp_st.floats(-1e2, 1e2),
+    aggregate_axes=hyp_st.booleans(),
 )
-def test_pseudo_velocity_linearity(df_accel, freq, damp, factor):
+def test_pseudo_velocity_linearity(df_accel, freq, damp, factor, aggregate_axes):
     pd.testing.assert_frame_equal(
-        shock.pseudo_velocity(factor * df_accel, [freq], damp=damp),
-        (factor * shock.pseudo_velocity(df_accel, [freq], damp=damp)).abs(),
+        shock.pseudo_velocity(
+            factor * df_accel, [freq], damp=damp, aggregate_axes=aggregate_axes
+        ),
+        (
+            factor
+            * shock.pseudo_velocity(
+                df_accel, [freq], damp=damp, aggregate_axes=aggregate_axes
+            )
+        ).abs(),
     )
 
 

@@ -52,23 +52,23 @@ def pseudo_velocity(
     omega = 2 * np.pi * freqs
 
     results = np.empty(
-        (2,) + freqs.shape + (() if aggregate_axes else df.shape[1:]),
+        (2,) + freqs.shape + ((1,) if aggregate_axes else df.shape[1:]),
         dtype=np.float64,
     )
 
     for i_nd in np.ndindex(freqs.shape):
-        rd = rel_displ(df, omega[i_nd], damp)
+        rd = rel_displ(df, omega[i_nd], damp).to_numpy()
         if aggregate_axes:
-            rd = L2_norm(rd, axis=-1)
+            rd = L2_norm(rd, axis=-1, keepdims=True)
 
         results[(0,) + i_nd] = -omega[i_nd] * rd.min(axis=0)
         results[(1,) + i_nd] = omega[i_nd] * rd.max(axis=0)
 
-    if not two_sided:
+    if aggregate_axes or not two_sided:
         return pd.DataFrame(
             np.maximum(results[0], results[1]),
             index=pd.Series(freqs, name="frequency (Hz)"),
-            columns=df.columns,
+            columns=(["resultant"] if aggregate_axes else df.columns),
         )
 
     return namedtuple("PseudoVelocityResults", "neg pos")(
