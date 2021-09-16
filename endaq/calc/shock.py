@@ -75,6 +75,20 @@ class HalfSineWavePulse(NamedTuple):
     amplitude: float
     duration: float
 
+    def __init__(self, amplitude, duration, freqs=None, damp=None):
+        super().__init__(amplitude, duration)
+        self._freqs = freqs
+        self._damp = damp
+
+    def time_series(self, dt, t0=0):
+        pass
+
+    def widened_duration(self, new_duration: float):
+        pass
+
+    def pseudo_velocity(self):
+        pass
+
 
 def enveloping_half_sine(
     df_pvss: pd.DataFrame,
