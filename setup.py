@@ -1,4 +1,14 @@
-import setuptools
+import numpy
+
+from numpy.distutils.core import setup, Extension
+# from setuptools import setup  , Extension
+
+module1 = Extension(
+        'endaq.calc.pseudovelocity',
+        sources=['endaq/calc/_pseudovelocity.c'],
+        include_dirs=[numpy.get_include()],
+        extra_compile_args=['-openmp:experimental', '-arch:AVX', '-Oi']
+        )
 
 with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
@@ -18,7 +28,7 @@ TEST_REQUIRES = [
 EXAMPLE_REQUIRES = [
     ]
 
-setuptools.setup(
+setup(
         name='endaq-calc',
         version='1.0.0b1',
         author='Mide Technology',
@@ -44,4 +54,5 @@ setuptools.setup(
             'test': INSTALL_REQUIRES + TEST_REQUIRES,
             'example': INSTALL_REQUIRES + EXAMPLE_REQUIRES,
             },
+    ext_modules=[module1],
 )
