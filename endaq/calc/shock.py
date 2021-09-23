@@ -14,28 +14,60 @@ import scipy.signal
 from endaq.calc.stats import L2_norm
 
 
+def _pvss_transfer_func(omega: float, damp: float = 0, dt: float = 1):
+    """
+    Generate the transfer function
+       H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
+    for the PDE
+       z" + (2ζω)z' + (ω^2)z = -y"
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
+
+        return scipy.signal.TransferFunction(
+            [-1],
+            [1, 2 * damp * omega, omega ** 2],
+        ).to_discrete(dt=dt)
+
+
 def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
     """Calculate the relative displacement for a SDOF system."""
-    # Generate the transfer function
-    #   H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
-    # for the PDE
-    #   z" + (2ζω)z' + (ω^2)z = -y"
     dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
     if isinstance(dt, (np.timedelta64, pd.Timedelta)):
         dt = dt / np.timedelta64(1, "s")
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
-
-        tf = scipy.signal.TransferFunction(
-            [-1],
-            [1, 2 * damp * omega, omega ** 2],
-        ).to_discrete(dt=dt)
+    tf = _pvss_transfer_func(omega, damp, dt)
 
     return df.apply(
         functools.partial(scipy.signal.lfilter, tf.num, tf.den, axis=0),
         raw=True,
     )
+
+
+def _minmax_rel_displ(
+    df: pd.DataFrame, omega: float, damp: float = 0, aggregate_axes: bool = False
+) -> pd.DataFrame:
+    """Calculate the relative displacement extremes for a SDOF system."""
+    dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
+    if isinstance(dt, (np.timedelta64, pd.Timedelta)):
+        dt = dt / np.timedelta64(1, "s")
+
+    tf = _pvss_transfer_func(omega, damp, dt)
+
+    columns = ["resultant"] if aggregate_axes else df.columns
+    result = pd.DataFrame(index=["min", "max"], columns=columns)
+
+    rd, _zf = scipy.signal.lfilter(
+        tf.num, tf.den, df.values, zi=np.zeros((2,) + df.shape[1:]), axis=0
+    )
+
+    if aggregate_axes:
+        rd = L2_norm(rd, axis=-1, keepdims=True)
+
+    result.loc["min", columns] = rd.min(axis=0)
+    result.loc["max", columns] = rd.max(axis=0)
+
+    return result
 
 
 def pseudo_velocity(
@@ -59,12 +91,10 @@ def pseudo_velocity(
     )
 
     for i_nd in np.ndindex(freqs.shape):
-        rd = rel_displ(df, omega[i_nd], damp).to_numpy()
-        if aggregate_axes:
-            rd = L2_norm(rd, axis=-1, keepdims=True)
+        rd = _minmax_rel_displ(df, omega[i_nd], damp, aggregate_axes)
 
-        results[(0,) + i_nd] = -omega[i_nd] * rd.min(axis=0)
-        results[(1,) + i_nd] = omega[i_nd] * rd.max(axis=0)
+        results[(0,) + i_nd] = -omega[i_nd] * rd.loc["min"]
+        results[(1,) + i_nd] = omega[i_nd] * rd.loc["max"]
 
     if aggregate_axes or not two_sided:
         return pd.DataFrame(
