@@ -12,28 +12,84 @@ import pandas as pd
 import scipy.signal
 
 
+def _pvss_transfer_func(omega: float, damp: float = 0, dt: float = 1):
+    """
+    Generate the transfer function
+       H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
+    for the PDE
+       z" + (2ζω)z' + (ω^2)z = -y"
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
+
+        return scipy.signal.TransferFunction(
+            [-1],
+            [1, 2 * damp * omega, omega ** 2],
+        ).to_discrete(dt=dt)
+
+
 def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
     """Calculate the relative displacement for a SDOF system."""
-    # Generate the transfer function
-    #   H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
-    # for the PDE
-    #   z" + (2ζω)z' + (ω^2)z = -y"
     dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
     if isinstance(dt, (np.timedelta64, pd.Timedelta)):
         dt = dt / np.timedelta64(1, "s")
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
-
-        tf = scipy.signal.TransferFunction(
-            [-1],
-            [1, 2 * damp * omega, omega ** 2],
-        ).to_discrete(dt=dt)
+    tf = _pvss_transfer_func(omega, damp, dt)
 
     return df.apply(
         functools.partial(scipy.signal.lfilter, tf.num, tf.den, axis=0),
         raw=True,
     )
+
+
+def _minmax_sos_zeros(a1, a2, z0, z1):
+    """Calculate the extreme values when zero-extending a biquad SOS filter."""
+    r = np.sqrt(a1 ** 2 - 4 * a2)
+    if np.isnan(r) or r == 0:
+        raise ValueError
+
+    k = np.log(
+        -(np.log(-a1 - r) - np.log(2))
+        * (a1 * z0 + z0 * r - 2 * z1)
+        / ((np.log(-a1 + r) - np.log(2)) * (-a1 * z0 + z0 * r + 2 * z1))
+    ) / np.log((a1 - r) / (a1 + r))
+
+    K = pass  # TODO
+    k1 = k % (K / 2)
+    k2 = k1 + (K / 2)
+
+    def y_n(k):
+        return (
+            (1 / 4)
+            * 2 ** (-k)
+            * (
+                -2 * a2 * z0 * ((-a1 - r) ** (k + 1) - (-a1 + r) ** (k + 1))
+                + z1 * ((-a1 - r) ** (k + 1) * (a1 - r) - (-a1 + r) ** (k + 1) * (a1 + r))
+            )
+            / (a2 * r)
+        )
+
+    y_k1, y_k2 = y_n(k1), y_n(k2)
+
+    return tuple(sort([y_k1, y_k2]))
+
+
+def _minmax_rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
+    """Calculate the relative displacement extremes for a SDOF system."""
+    dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
+    if isinstance(dt, (np.timedelta64, pd.Timedelta)):
+        dt = dt / np.timedelta64(1, "s")
+
+    tf = _pvss_transfer_func(omega, damp, dt)
+
+    result = pd.DataFrame(index=["min", "max"], columns=df.columns)
+    for col in df.columns:
+        rd, zf = scipy.signal.lfilter(tf.num, tf.den, df[col].values, zi=[])
+        min0s, max0s = _minmax_sos_zeros(tf.den[1], tf.den[2], zi[0], zi[1])
+        result.loc["min", col] = np.minimum(rd.min(axis="rows"), min0s)
+        result.loc["max", col] = np.maximum(rd.max(axis="rows"), min0s)
+
+    return result
 
 
 def pseudo_velocity(
