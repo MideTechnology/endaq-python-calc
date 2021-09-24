@@ -45,11 +45,9 @@ def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
 def _minmax_sos_zeros(a1, a2, z0, z1):
     """Calculate the extrema when zero-extending a biquad SOS filter."""
     r = np.sqrt(a1 ** 2 - 4 * a2 + 0j)
-    if np.isnan(r) or r == 0:
-        raise ValueError
 
     def z0_n(n):
-        return np.real(
+        return np.real_if_close(
             (1 / 4)
             * 2 ** (-n)
             * (
@@ -61,7 +59,7 @@ def _minmax_sos_zeros(a1, a2, z0, z1):
         )
 
     def z1_n(n):
-        return np.real(
+        return np.real_if_close(
             (1 / 2)
             * 2 ** (-n)
             * (
@@ -72,16 +70,16 @@ def _minmax_sos_zeros(a1, a2, z0, z1):
         )
 
     def n_opt(z0, z1):
-        return np.log(
+        return np.real_if_close(np.log(
             -(np.log(-a1 - r) - np.log(2))
             * (a1 * z0 + z0 * r - 2 * z1)
             / ((np.log(-a1 + r) - np.log(2)) * (-a1 * z0 + z0 * r + 2 * z1))
-        ) / np.log((a1 - r) / (a1 + r))
+        ) / np.log((a1 - r) / (a1 + r)))
 
     def n_zero(z0, z1):
-        return np.log(
+        return np.real_if_close(np.log(
             (-a1 * z0 - z0 * r + 2 * z1) / (-a1 * z0 + z0 * r + 2 * z1)
-        ) / np.log((a1 - r) / (a1 + r))
+        ) / np.log((a1 - r) / (a1 + r)))
 
     def n_half_period(n_opt1):
         z0_1, z1_1 = z0_n(n_opt1), z1_n(n_opt1)

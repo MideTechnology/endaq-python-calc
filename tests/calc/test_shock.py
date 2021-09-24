@@ -65,7 +65,7 @@ def ai(draw):
     a1 = draw(hyp_st.floats(1e-5, 2, exclude_min=True, exclude_max=True))
     a1 = a1 * (-1) ** int(draw(hyp_st.booleans()))
     hyp.assume(a1 ** 2 > 0)
-    a2 = draw(hyp_st.floats(0, a1 ** 2 / 4, exclude_min=True, exclude_max=True))
+    a2 = draw(hyp_st.floats(a1 ** 2 / 4, 1, exclude_min=True, exclude_max=True))
 
     return a1, a2
 
@@ -81,7 +81,7 @@ def test_minmax_sos_zeros(ai, z0, z1):
     array_filt = array_filt[sign_changes[0] :]
     expt_result = (array_filt.min(), array_filt.max())
 
-    assert calc_result == expt_result
+    np.testing.assert_allclose(calc_result, expt_result)
 
 
 @hyp.given(
