@@ -4,9 +4,9 @@ with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
 
 INSTALL_REQUIRES = [
-    "numpy",
-    "pandas",
-    "scipy",
+    "numpy>=1.18",
+    "pandas>=1.2",
+    "scipy>=1.6",
     ]
 
 TEST_REQUIRES = [
