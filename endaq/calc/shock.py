@@ -40,18 +40,18 @@ def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
     )
 
 
-def rel_accel(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
-    """Calculate the relative acceleration for a SDOF system."""
+def abs_accel(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
+    """Calculate the absolute acceleration for a SDOF system."""
     # Generate the transfer function
-    #   H(s) = L{z"(t)}(s) / L{y"(t)}(s) = Z(s)/Y(s)
+    #   H(s) = L{x"(t)}(s) / L{y"(t)}(s) = X(s)/Y(s)
     # for the PDE
-    #   z" + (2ζω)z' + (ω^2)z = -y"
+    #   x" + (2ζω)x' + (ω^2)x = (2ζω)y' + (ω^2)y
     dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
     if isinstance(dt, (np.timedelta64, pd.Timedelta)):
         dt = dt / np.timedelta64(1, "s")
 
     tf = scipy.signal.TransferFunction(
-        [-1, 0, 0],
+        [0, 2 * damp * omega, omega ** 2],
         [1, 2 * damp * omega, omega ** 2],
     ).to_discrete(dt=dt)
 
@@ -84,7 +84,7 @@ def pseudo_velocity(
 
     if use_rel_accel:
         for i_nd in np.ndindex(freqs.shape):
-            rd = rel_accel(df, omega[i_nd], damp).to_numpy()
+            rd = abs_accel(df, omega[i_nd], damp).to_numpy()
             if aggregate_axes:
                 rd = L2_norm(rd, axis=-1, keepdims=True)
 
