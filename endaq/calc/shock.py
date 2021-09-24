@@ -50,14 +50,16 @@ def _minmax_sos_zeros(a1, a2, z0, z1):
 
     def z0_n(n):
         return np.real_if_close(
-            (1 / 4)
-            * 2 ** (-n)
+            (1 / 2)
             * (
-                -2 * a2 * z0 * ((-a1_plus_r) ** (n + 1) - (-a1_minus_r) ** (n + 1))
+                -2
+                * a2
+                * z0
+                * ((-a1_plus_r / 2) ** (n + 1) - (-a1_minus_r / 2) ** (n + 1))
                 + z1
                 * (
-                    (-a1_plus_r) ** (n + 1) * a1_minus_r
-                    - (-a1_minus_r) ** (n + 1) * a1_plus_r
+                    (-a1_plus_r / 2) ** (n + 1) * a1_minus_r
+                    - (-a1_minus_r / 2) ** (n + 1) * a1_plus_r
                 )
             )
             / (a2 * r)
@@ -66,11 +68,13 @@ def _minmax_sos_zeros(a1, a2, z0, z1):
     def z1_n(n):
         return np.real_if_close(
             (1 / 2)
-            * 2 ** (-n)
             * (
-                -2 * a2 * z0 * (-((-a1_plus_r) ** n) + (-a1_minus_r) ** n)
+                -2 * a2 * z0 * (-((-a1_plus_r / 2) ** n) + (-a1_minus_r / 2) ** n)
                 + z1
-                * ((-a1_plus_r) ** n * (-a1_minus_r) + (-a1_minus_r) ** n * a1_plus_r)
+                * (
+                    (-a1_plus_r / 2) ** n * (-a1_minus_r)
+                    + (-a1_minus_r / 2) ** n * a1_plus_r
+                )
             )
             / r
         )
