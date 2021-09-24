@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as fh:
 
 INSTALL_REQUIRES = [
     "numpy<=1.18",
-    "pandas<=1.1",
+    "pandas<=1.2",
     "scipy<=1.6",
     ]
 
