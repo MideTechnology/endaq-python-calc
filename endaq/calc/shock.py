@@ -45,15 +45,20 @@ def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
 def _minmax_sos_zeros(a1, a2, z0, z1):
     """Calculate the extrema when zero-extending a biquad SOS filter."""
     r = np.sqrt(a1 ** 2 - 4 * a2 + 0j)
+    a1_plus_r = a1 + r
+    a1_minus_r = a1 - r
 
     def z0_n(n):
         return np.real_if_close(
             (1 / 4)
             * 2 ** (-n)
             * (
-                -2 * a2 * z0 * ((-a1 - r) ** (n + 1) - (-a1 + r) ** (n + 1))
+                -2 * a2 * z0 * ((-a1_plus_r) ** (n + 1) - (-a1_minus_r) ** (n + 1))
                 + z1
-                * ((-a1 - r) ** (n + 1) * (a1 - r) - (-a1 + r) ** (n + 1) * (a1 + r))
+                * (
+                    (-a1_plus_r) ** (n + 1) * a1_minus_r
+                    - (-a1_minus_r) ** (n + 1) * a1_plus_r
+                )
             )
             / (a2 * r)
         )
@@ -63,23 +68,28 @@ def _minmax_sos_zeros(a1, a2, z0, z1):
             (1 / 2)
             * 2 ** (-n)
             * (
-                -2 * a2 * z0 * (-((-a1 - r) ** n) + (-a1 + r) ** n)
-                + z1 * ((-a1 - r) ** n * (-a1 + r) + (-a1 + r) ** n * (a1 + r))
+                -2 * a2 * z0 * (-((-a1_plus_r) ** n) + (-a1_minus_r) ** n)
+                + z1
+                * ((-a1_plus_r) ** n * (-a1_minus_r) + (-a1_minus_r) ** n * a1_plus_r)
             )
             / r
         )
 
     def n_opt(z0, z1):
-        return np.real_if_close(np.log(
-            -(np.log(-a1 - r) - np.log(2))
-            * (a1 * z0 + z0 * r - 2 * z1)
-            / ((np.log(-a1 + r) - np.log(2)) * (-a1 * z0 + z0 * r + 2 * z1))
-        ) / np.log((a1 - r) / (a1 + r)))
+        return np.real_if_close(
+            np.log(
+                np.log(-a1_plus_r / 2)
+                * (z0 * a1_plus_r - 2 * z1)
+                / (np.log(-a1_minus_r / 2) * (z0 * a1_minus_r - 2 * z1))
+            )
+            / np.log(a1_minus_r / a1_plus_r)
+        )
 
     def n_zero(z0, z1):
-        return np.real_if_close(np.log(
-            (-a1 * z0 - z0 * r + 2 * z1) / (-a1 * z0 + z0 * r + 2 * z1)
-        ) / np.log((a1 - r) / (a1 + r)))
+        return np.real_if_close(
+            np.log((z0 * a1_plus_r - 2 * z1) / (z0 * a1_minus_r - 2 * z1))
+            / np.log(a1_minus_r / a1_plus_r)
+        )
 
     def n_half_period(n_opt1):
         z0_1, z1_1 = z0_n(n_opt1), z1_n(n_opt1)
