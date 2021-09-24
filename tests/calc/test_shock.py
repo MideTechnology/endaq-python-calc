@@ -62,24 +62,32 @@ def test_rel_displ(freq, damp):
 @hyp.given(
     df_accel=hyp_np.arrays(
         dtype=np.float64,
-        shape=(40,),
+        shape=(40, 2),
         elements=hyp_st.floats(1e-20, 1e20),
     ).map(lambda array: pd.DataFrame(array, index=np.arange(40) * 1e-4)),
     freq=hyp_st.floats(1, 20),
     damp=hyp_st.floats(0, 1, exclude_max=True),
     factor=hyp_st.floats(-1e2, 1e2),
+    aggregate_axes=hyp_st.booleans(),
 )
-def test_pseudo_velocity_linearity(df_accel, freq, damp, factor):
+def test_pseudo_velocity_linearity(df_accel, freq, damp, factor, aggregate_axes):
     pd.testing.assert_frame_equal(
-        shock.pseudo_velocity(factor * df_accel, [freq], damp=damp),
-        (factor * shock.pseudo_velocity(df_accel, [freq], damp=damp)).abs(),
+        shock.pseudo_velocity(
+            factor * df_accel, [freq], damp=damp, aggregate_axes=aggregate_axes
+        ),
+        (
+            factor
+            * shock.pseudo_velocity(
+                df_accel, [freq], damp=damp, aggregate_axes=aggregate_axes
+            )
+        ).abs(),
     )
 
 
 @hyp.given(
     df_pvss=hyp_np.arrays(
         dtype=np.float64,
-        shape=(40,),
+        shape=(40, 2),
         elements=hyp_st.floats(1e-20, 1e20),
     ).map(lambda array: pd.DataFrame(array, index=np.arange(1, 41))),
     damp=hyp_st.floats(0, 0.2),

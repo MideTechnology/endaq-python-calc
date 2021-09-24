@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 import scipy.signal
 
+from endaq.calc.stats import L2_norm
+
 
 def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
     """Calculate the relative displacement for a SDOF system."""
@@ -41,26 +43,34 @@ def pseudo_velocity(
     freqs: np.ndarray,
     damp: float = 0,
     two_sided: bool = False,
+    aggregate_axes: bool = False,
 ) -> pd.DataFrame:
     """The pseudo velocity of an acceleration signal."""
+    if two_sided and aggregate_axes:
+        raise ValueError("cannot enable both options `two_sided` and `aggregate_axes`")
     freqs = np.asarray(freqs)
     if freqs.ndim != 1:
         raise ValueError("target frequencies must be in a 1D-array")
     omega = 2 * np.pi * freqs
 
-    results = np.empty((2,) + freqs.shape + df.shape[1:], dtype=np.float64)
+    results = np.empty(
+        (2,) + freqs.shape + ((1,) if aggregate_axes else df.shape[1:]),
+        dtype=np.float64,
+    )
 
     for i_nd in np.ndindex(freqs.shape):
-        rd = rel_displ(df, omega[i_nd], damp)
+        rd = rel_displ(df, omega[i_nd], damp).to_numpy()
+        if aggregate_axes:
+            rd = L2_norm(rd, axis=-1, keepdims=True)
 
         results[(0,) + i_nd] = -omega[i_nd] * rd.min(axis=0)
         results[(1,) + i_nd] = omega[i_nd] * rd.max(axis=0)
 
-    if not two_sided:
+    if aggregate_axes or not two_sided:
         return pd.DataFrame(
             np.maximum(results[0], results[1]),
             index=pd.Series(freqs, name="frequency (Hz)"),
-            columns=df.columns,
+            columns=(["resultant"] if aggregate_axes else df.columns),
         )
 
     return namedtuple("PseudoVelocityResults", "neg pos")(
