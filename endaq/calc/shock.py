@@ -43,35 +43,64 @@ def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
 
 
 def _minmax_sos_zeros(a1, a2, z0, z1):
-    """Calculate the extreme values when zero-extending a biquad SOS filter."""
-    r = np.sqrt(a1 ** 2 - 4 * a2)
+    """Calculate the extrema when zero-extending a biquad SOS filter."""
+    r = np.sqrt(a1 ** 2 - 4 * a2 + 0j)
     if np.isnan(r) or r == 0:
         raise ValueError
 
-    k = np.log(
-        -(np.log(-a1 - r) - np.log(2))
-        * (a1 * z0 + z0 * r - 2 * z1)
-        / ((np.log(-a1 + r) - np.log(2)) * (-a1 * z0 + z0 * r + 2 * z1))
-    ) / np.log((a1 - r) / (a1 + r))
-
-    K = pass  # TODO
-    k1 = k % (K / 2)
-    k2 = k1 + (K / 2)
-
-    def y_n(k):
-        return (
+    def z0_n(n):
+        return np.real(
             (1 / 4)
-            * 2 ** (-k)
+            * 2 ** (-n)
             * (
-                -2 * a2 * z0 * ((-a1 - r) ** (k + 1) - (-a1 + r) ** (k + 1))
-                + z1 * ((-a1 - r) ** (k + 1) * (a1 - r) - (-a1 + r) ** (k + 1) * (a1 + r))
+                -2 * a2 * z0 * ((-a1 - r) ** (n + 1) - (-a1 + r) ** (n + 1))
+                + z1
+                * ((-a1 - r) ** (n + 1) * (a1 - r) - (-a1 + r) ** (n + 1) * (a1 + r))
             )
             / (a2 * r)
         )
 
-    y_k1, y_k2 = y_n(k1), y_n(k2)
+    def z1_n(n):
+        return np.real(
+            (1 / 2)
+            * 2 ** (-n)
+            * (
+                -2 * a2 * z0 * (-((-a1 - r) ** n) + (-a1 + r) ** n)
+                + z1 * ((-a1 - r) ** n * (-a1 + r) + (-a1 + r) ** n * (a1 + r))
+            )
+            / r
+        )
 
-    return tuple(sort([y_k1, y_k2]))
+    def n_opt(z0, z1):
+        return np.log(
+            -(np.log(-a1 - r) - np.log(2))
+            * (a1 * z0 + z0 * r - 2 * z1)
+            / ((np.log(-a1 + r) - np.log(2)) * (-a1 * z0 + z0 * r + 2 * z1))
+        ) / np.log((a1 - r) / (a1 + r))
+
+    def n_zero(z0, z1):
+        return np.log(
+            (-a1 * z0 - z0 * r + 2 * z1) / (-a1 * z0 + z0 * r + 2 * z1)
+        ) / np.log((a1 - r) / (a1 + r))
+
+    def n_half_period(n_opt1):
+        z0_1, z1_1 = z0_n(n_opt1), z1_n(n_opt1)
+        n_zero1 = n_zero(z0_1, z1_1) + n_opt1
+
+        n_est = n_opt1 + 2 * (n_opt1 - n_zero1)
+        z0_2, z1_2 = z0_n(n_est), z1_n(n_est)
+        n_opt2 = n_opt(z0_2, z1_2) + n_est
+
+        return n_opt2 - n_opt1
+
+    n1 = n_opt(z0, z1)
+    N_half = n_half_period(n1)
+    n1 = n1 % N_half
+    n2 = n1 + N_half
+
+    y_n1, y_n2 = z0_n(n1), z0_n(n2)
+
+    return tuple(sorted([y_n1, y_n2]))
 
 
 def _minmax_rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:

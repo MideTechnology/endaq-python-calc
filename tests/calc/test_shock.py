@@ -5,6 +5,7 @@ import hypothesis.extra.numpy as hyp_np
 
 import numpy as np
 import pandas as pd
+import scipy.signal
 
 from endaq.calc import shock
 
@@ -57,6 +58,30 @@ def test_rel_displ(freq, damp):
 
     # Test results
     assert np.allclose(calc_result, expt_result)
+
+
+@hyp_st.composite
+def ai(draw):
+    a1 = draw(hyp_st.floats(1e-5, 2, exclude_min=True, exclude_max=True))
+    a1 = a1 * (-1) ** int(draw(hyp_st.booleans()))
+    hyp.assume(a1 ** 2 > 0)
+    a2 = draw(hyp_st.floats(0, a1 ** 2 / 4, exclude_min=True, exclude_max=True))
+
+    return a1, a2
+
+
+@hyp.given(ai=ai(), z0=hyp_st.floats(-1, 1), z1=hyp_st.floats(-1, 1))
+def test_minmax_sos_zeros(ai, z0, z1):
+    array = np.zeros(1000)
+    array_filt, _ = scipy.signal.lfilter([1], [1, ai[0], ai[1]], array, zi=[z0, z1])
+    sign_changes = np.flatnonzero(np.diff(np.diff(array_filt) > 0))
+
+    hyp.assume(len(sign_changes) >= 2)
+    calc_result = shock._minmax_sos_zeros(ai[0], ai[1], z0, z1)
+    array_filt = array_filt[sign_changes[0] :]
+    expt_result = (array_filt.min(), array_filt.max())
+
+    assert calc_result == expt_result
 
 
 @hyp.given(
