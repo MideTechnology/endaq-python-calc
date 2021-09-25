@@ -48,11 +48,10 @@ def _minmax_sos_zeros(a1, a2, z0, z1):
     a1_r_com = (a1 + r) / 2
     a1_r_diff = (a1 - r) / 2
 
-    def realish_or_nan(x, rel_tol=1e-6, abs_tol=1e-10):
+    def realish_or_nan(x, rtol=1e-6, atol=1e-10):
         """Verify that the input is nearly real-valued; if not, raise Error."""
         result = np.where(
-            (np.abs(np.imag(x)) < abs_tol)
-            | (np.abs(np.imag(x) / np.real(x)) <= rel_tol),
+            (np.abs(np.imag(x)) < atol) | (np.abs(np.imag(x) / np.real(x)) <= rtol),
             np.real(x),
             np.nan,
         )

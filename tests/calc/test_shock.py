@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 import hypothesis as hyp
 import hypothesis.strategies as hyp_st
@@ -61,28 +63,46 @@ def test_rel_displ(freq, damp):
 
 
 @hyp_st.composite
-def ai(draw):
-    a1 = draw(hyp_st.floats(1e-5, 2, exclude_min=True, exclude_max=True))
-    a1 = a1 * (-1) ** draw(hyp_st.integers(0, 1))
-    a2 = draw(hyp_st.floats(a1 ** 2 / 4 + 1e-5, 1, exclude_max=True))
+def ai_zi(draw):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
 
-    return a1, a2
+        ai = [1] + [draw(hyp_st.floats(-1, 1)) for _ in range(2)]
+        bi = [draw(hyp_st.sampled_from([0, 1]))] + [
+            draw(hyp_st.floats(-1, 1)) for _ in range(2)
+        ]
+        tf = scipy.signal.TransferFunction(bi, ai).to_discrete(dt=1)
+
+    x = draw(
+        hyp_np.arrays(dtype=np.float64, shape=(20,), elements=hyp_st.floats(0.5, 2))
+    )
+    x_filt, zf = scipy.signal.lfilter(tf.num, tf.den, x, zi=[0, 0])
+
+    return (
+        tf.den[1],
+        tf.den[2],
+        zf[0],
+        zf[1],
+    )
 
 
-@hyp.given(ai=ai(), z0=hyp_st.floats(-1, 1), z1=hyp_st.floats(-1, 1))
-def test_minmax_sos_zeros(ai, z0, z1):
+@hyp.given(ai_zi=ai_zi())
+def test_minmax_sos_zeros(ai_zi):
+    a1, a2, z0, z1 = ai_zi
+    hyp.note(np.sqrt(a1 ** 2 - 4 * a2 + 0j))
+
     array = np.zeros(1000)
-    array_filt, _ = scipy.signal.lfilter([1], [1, ai[0], ai[1]], array, zi=[z0, z1])
+    array_filt, _ = scipy.signal.lfilter([1], [1, a1, a2], array, zi=[z0, z1])
     sign_changes = np.flatnonzero(np.diff(np.diff(array_filt) > 0))
 
     hyp.assume(len(sign_changes) >= 2)
     hyp.assume(sign_changes[1] - sign_changes[0] > 10)
-    calc_result = shock._minmax_sos_zeros(ai[0], ai[1], z0, z1)
+    calc_result = shock._minmax_sos_zeros(a1, a2, z0, z1)
     array_filt_mask = array_filt[sign_changes[0] :]
     expt_result = (array_filt_mask.min(), array_filt_mask.max())
 
-    np.testing.assert_allclose(calc_result, expt_result)
-    calc_result = shock._minmax_sos_zeros(ai[0], ai[1], z0, z1)
+    np.testing.assert_allclose(calc_result, expt_result, rtol=1e-2)
+    calc_result = shock._minmax_sos_zeros(a1, a2, z0, z1)
 
 
 @hyp.given(
