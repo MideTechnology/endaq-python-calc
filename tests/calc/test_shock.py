@@ -63,9 +63,8 @@ def test_rel_displ(freq, damp):
 @hyp_st.composite
 def ai(draw):
     a1 = draw(hyp_st.floats(1e-5, 2, exclude_min=True, exclude_max=True))
-    a1 = a1 * (-1) ** int(draw(hyp_st.booleans()))
-    hyp.assume(a1 ** 2 > 0)
-    a2 = draw(hyp_st.floats(a1 ** 2 / 4, 1, exclude_min=True, exclude_max=True))
+    a1 = a1 * (-1) ** draw(hyp_st.integers(0, 1))
+    a2 = draw(hyp_st.floats(a1 ** 2 / 4 + 1e-5, 1, exclude_max=True))
 
     return a1, a2
 
@@ -77,11 +76,13 @@ def test_minmax_sos_zeros(ai, z0, z1):
     sign_changes = np.flatnonzero(np.diff(np.diff(array_filt) > 0))
 
     hyp.assume(len(sign_changes) >= 2)
+    hyp.assume(sign_changes[1] - sign_changes[0] > 10)
     calc_result = shock._minmax_sos_zeros(ai[0], ai[1], z0, z1)
-    array_filt = array_filt[sign_changes[0] :]
-    expt_result = (array_filt.min(), array_filt.max())
+    array_filt_mask = array_filt[sign_changes[0] :]
+    expt_result = (array_filt_mask.min(), array_filt_mask.max())
 
     np.testing.assert_allclose(calc_result, expt_result)
+    calc_result = shock._minmax_sos_zeros(ai[0], ai[1], z0, z1)
 
 
 @hyp.given(
