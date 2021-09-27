@@ -43,7 +43,7 @@ def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
 
 
 def _minmax_sos_zeros(a1, a2, z0, z1):
-    """Calculate the extrema when zero-extending a biquad SOS filter."""
+    """Calculate the extrema when zero-padding a SOS biquad filter's input."""
     r = np.sqrt(a1 ** 2 - 4 * a2 + 0j)
     a1_r_com = (a1 + r) / 2
     a1_r_diff = (a1 - r) / 2
