@@ -97,14 +97,7 @@ def _minmax_sos_zeros(a1, a2, z0, z1):
         )
 
     def n_half_period(n_opt1):
-        z0_1, z1_1 = z0_n(n_opt1), z1_n(n_opt1)
-        n_zero1 = n_zero(z0_1, z1_1) + n_opt1
-
-        n_est = n_opt1 + 2 * (n_opt1 - n_zero1)
-        z0_2, z1_2 = z0_n(n_est), z1_n(n_est)
-        n_opt2 = n_opt(z0_2, z1_2) + n_est
-
-        return n_opt2 - n_opt1
+        return np.pi / np.angle(a1_r_com)
 
     n1 = n_opt(z0, z1)
     N_half = n_half_period(n1)
