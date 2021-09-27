@@ -67,9 +67,15 @@ def ai_zi(draw):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
 
-        ai = [1] + [draw(hyp_st.floats(-1, 1)) for _ in range(2)]
-        bi = [draw(hyp_st.sampled_from([0, 1]))] + [
-            draw(hyp_st.floats(-1, 1)) for _ in range(2)
+        ai = [
+            1,
+            draw(hyp_st.floats(-1, 1)),
+            draw(hyp_st.floats(0, 0.5)),
+        ]
+        bi = [
+            draw(hyp_st.sampled_from([0, 1])),
+            draw(hyp_st.floats(-1, 1)),
+            draw(hyp_st.floats(0, 0.5)),
         ]
         tf = scipy.signal.TransferFunction(bi, ai).to_discrete(dt=1)
 
@@ -90,6 +96,8 @@ def ai_zi(draw):
 def test_minmax_sos_zeros(ai_zi):
     a1, a2, z0, z1 = ai_zi
     hyp.note(np.sqrt(a1 ** 2 - 4 * a2 + 0j))
+    hyp.note((a1 + np.sqrt(a1 ** 2 - 4 * a2 + 0j)) / 2)
+    hyp.note((a1 - np.sqrt(a1 ** 2 - 4 * a2 + 0j)) / 2)
 
     array = np.zeros(1000)
     array_filt, _ = scipy.signal.lfilter([1], [1, a1, a2], array, zi=[z0, z1])
@@ -102,7 +110,6 @@ def test_minmax_sos_zeros(ai_zi):
     expt_result = (array_filt_mask.min(), array_filt_mask.max())
 
     np.testing.assert_allclose(calc_result, expt_result, rtol=1e-2)
-    calc_result = shock._minmax_sos_zeros(a1, a2, z0, z1)
 
 
 @hyp.given(

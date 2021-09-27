@@ -81,7 +81,7 @@ def _minmax_sos_zeros(a1, a2, z0, z1):
         )
 
     def n_opt(z0, z1):
-        return realish_or_nan(
+        return np.real(
             np.log(
                 np.log(-a1_r_com)
                 * (z0 * a1_r_com - z1)
@@ -91,7 +91,7 @@ def _minmax_sos_zeros(a1, a2, z0, z1):
         )
 
     def n_zero(z0, z1):
-        return realish_or_nan(
+        return np.real(
             np.log((z0 * a1_r_com - z1) / (z0 * a1_r_diff - z1))
             / np.log(a1_r_diff / a1_r_com)
         )
