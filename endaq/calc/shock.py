@@ -106,7 +106,17 @@ def _minmax_sos_zeros(a1, a2, z0, z1):
 
     y_n1, y_n2 = z0_n(n1), z0_n(n2)
 
-    return tuple(sorted([y_n1, y_n2]))
+    mins, maxs = sorted(
+        [
+            (n1, y_n1),
+            (n2, y_n2),
+        ],
+        key=lambda x: x[1],
+    )
+
+    return namedtuple("SosFilterStruct", "imin, min, imax, max")(
+        imin=mins[0], min=mins[1], imax=maxs[0], max=maxs[1]
+    )
 
 
 def _minmax_rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:

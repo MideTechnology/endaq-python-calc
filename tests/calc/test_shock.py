@@ -95,21 +95,42 @@ def ai_zi(draw):
 @hyp.given(ai_zi=ai_zi())
 def test_minmax_sos_zeros(ai_zi):
     a1, a2, z0, z1 = ai_zi
+    # The square-root term
     hyp.note(np.sqrt(a1 ** 2 - 4 * a2 + 0j))
-    hyp.note((a1 + np.sqrt(a1 ** 2 - 4 * a2 + 0j)) / 2)
-    hyp.note((a1 - np.sqrt(a1 ** 2 - 4 * a2 + 0j)) / 2)
+    # The filter's eiganvalues
+    hyp.note((-a1 + np.sqrt(a1 ** 2 - 4 * a2 + 0j)) / 2)
+    hyp.note((-a1 - np.sqrt(a1 ** 2 - 4 * a2 + 0j)) / 2)
 
     array = np.zeros(1000)
     array_filt, _ = scipy.signal.lfilter([1], [1, a1, a2], array, zi=[z0, z1])
-    sign_changes = np.flatnonzero(np.diff(np.diff(array_filt) > 0))
 
+    sign_changes = np.flatnonzero(np.diff(np.diff(array_filt) > 0))
     hyp.assume(len(sign_changes) >= 2)
     hyp.assume(sign_changes[1] - sign_changes[0] > 10)
-    calc_result = shock._minmax_sos_zeros(a1, a2, z0, z1)
-    array_filt_mask = array_filt[sign_changes[0] :]
-    expt_result = (array_filt_mask.min(), array_filt_mask.max())
 
-    np.testing.assert_allclose(calc_result, expt_result, rtol=1e-2)
+    calc_result = shock._minmax_sos_zeros(a1, a2, z0, z1)
+
+    i1, i2 = int(np.floor(calc_result.imin)), int(np.ceil(calc_result.imin))
+    # Check that the peak is "correct"
+    assert calc_result.min <= array_filt[[i1, i2]].min()
+    # Check that the peak is in fact at a local minimum
+    if i1 > 0:
+        # data should be decreasing before the peak
+        assert array_filt[i1 - 1] > array_filt[i1]
+    if i2 < len(array_filt) - 1:
+        # data should be increasing after the peak
+        assert array_filt[i2] < array_filt[i2 + 1]
+
+    i1, i2 = int(np.floor(calc_result.imax)), int(np.ceil(calc_result.imax))
+    # Check that the peak is "correct"
+    assert calc_result.max >= array_filt[[i1, i2]].max()
+    # Check that the peak is in fact at a local maximum
+    if i1 > 0:
+        # data should be increasing before the peak
+        assert array_filt[i1 - 1] < array_filt[i1]
+    if i2 < len(array_filt) - 1:
+        # data should be decreasing after the peak
+        assert array_filt[i2] > array_filt[i2 + 1]
 
 
 @hyp.given(
