@@ -64,19 +64,18 @@ def test_rel_displ(freq, damp):
 
 @hyp_st.composite
 def ai_zi(draw):
-    a1 = draw(hyp_st.floats(-2, -1e-7, exclude_min=True, exclude_max=True))
+    a1 = draw(hyp_st.floats(-2, -1e-7, exclude_min=True))
 
+    # Generate values of `a2` s.t. the filter's period > 10
     period = draw(hyp_st.floats(12, 500))
     a2 = (a1 / 2 / np.cos(2 * np.pi / period)) ** 2
-
-    # Check values for validity
     r = np.sqrt(a1 ** 2 - 4 * a2 + 0j)
     eigan_pos = (-a1 + r) / 2
-    assert np.angle(eigan_pos) < np.pi / 5  # period > 10
+    assert 2 * np.pi / np.angle(eigan_pos) > 10  # period > 10
 
+    # Generate sufficiently non-zero `zi` values
     z0 = draw(hyp_st.floats(1e-7, 1)) * draw(hyp_st.sampled_from([-1, 1]))
     z1 = draw(hyp_st.floats(1e-7, 1)) * draw(hyp_st.sampled_from([-1, 1]))
-    hyp.assume(z0 != 0 or z1 != 0)
 
     return (a1, a2, z0, z1)
 
