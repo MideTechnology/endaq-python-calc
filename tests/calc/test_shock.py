@@ -64,32 +64,21 @@ def test_rel_displ(freq, damp):
 
 @hyp_st.composite
 def ai_zi(draw):
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
+    a1 = draw(hyp_st.floats(-2, -1e-7, exclude_min=True, exclude_max=True))
 
-        ai = [
-            1,
-            draw(hyp_st.floats(-1, 1)),
-            draw(hyp_st.floats(0, 0.5)),
-        ]
-        bi = [
-            draw(hyp_st.sampled_from([0, 1])),
-            draw(hyp_st.floats(-1, 1)),
-            draw(hyp_st.floats(0, 0.5)),
-        ]
-        tf = scipy.signal.TransferFunction(bi, ai).to_discrete(dt=1)
+    period = draw(hyp_st.floats(12, 500))
+    a2 = (a1 / 2 / np.cos(2 * np.pi / period)) ** 2
 
-    x = draw(
-        hyp_np.arrays(dtype=np.float64, shape=(20,), elements=hyp_st.floats(0.5, 2))
-    )
-    x_filt, zf = scipy.signal.lfilter(tf.num, tf.den, x, zi=[0, 0])
+    # Check values for validity
+    r = np.sqrt(a1 ** 2 - 4 * a2 + 0j)
+    eigan_pos = (-a1 + r) / 2
+    assert np.angle(eigan_pos) < np.pi / 5  # period > 10
 
-    return (
-        tf.den[1],
-        tf.den[2],
-        zf[0],
-        zf[1],
-    )
+    z0 = draw(hyp_st.floats(1e-7, 1)) * draw(hyp_st.sampled_from([-1, 1]))
+    z1 = draw(hyp_st.floats(1e-7, 1)) * draw(hyp_st.sampled_from([-1, 1]))
+    hyp.assume(z0 != 0 or z1 != 0)
+
+    return (a1, a2, z0, z1)
 
 
 @hyp.given(ai_zi=ai_zi())
