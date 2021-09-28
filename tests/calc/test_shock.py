@@ -96,10 +96,16 @@ def ai_zi(draw):
 def test_minmax_sos_zeros(ai_zi):
     a1, a2, z0, z1 = ai_zi
     # The square-root term
-    hyp.note(np.sqrt(a1 ** 2 - 4 * a2 + 0j))
+    r = np.sqrt(a1 ** 2 - 4 * a2 + 0j)
     # The filter's eiganvalues
-    hyp.note((-a1 + np.sqrt(a1 ** 2 - 4 * a2 + 0j)) / 2)
-    hyp.note((-a1 - np.sqrt(a1 ** 2 - 4 * a2 + 0j)) / 2)
+    e_pos = (-a1 + np.sqrt(a1 ** 2 - 4 * a2 + 0j)) / 2
+    e_neg = (-a1 - np.sqrt(a1 ** 2 - 4 * a2 + 0j)) / 2
+
+    hyp.note(r)
+    hyp.note(e_pos)
+    hyp.note(e_neg)
+
+    is_decaying = np.abs(e_pos) < 1
 
     array = np.zeros(1000)
     array_filt, _ = scipy.signal.lfilter([1], [1, a1, a2], array, zi=[z0, z1])
@@ -113,6 +119,10 @@ def test_minmax_sos_zeros(ai_zi):
     i1, i2 = int(np.floor(calc_result.imin)), int(np.ceil(calc_result.imin))
     # Check that the peak is "correct"
     assert calc_result.min <= array_filt[[i1, i2]].min()
+    if is_decaying:
+        assert calc_result.min <= array_filt[i1:].min()
+    else:
+        assert calc_result.min <= array_filt[:i2].min()
     # Check that the peak is in fact at a local minimum
     if i1 > 0:
         # data should be decreasing before the peak
@@ -124,6 +134,10 @@ def test_minmax_sos_zeros(ai_zi):
     i1, i2 = int(np.floor(calc_result.imax)), int(np.ceil(calc_result.imax))
     # Check that the peak is "correct"
     assert calc_result.max >= array_filt[[i1, i2]].max()
+    if is_decaying:
+        assert calc_result.max >= array_filt[i1:].max()
+    else:
+        assert calc_result.max >= array_filt[:i2].max()
     # Check that the peak is in fact at a local maximum
     if i1 > 0:
         # data should be increasing before the peak
