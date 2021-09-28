@@ -130,9 +130,9 @@ def _minmax_rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.Dat
     result = pd.DataFrame(index=["min", "max"], columns=df.columns)
     for col in df.columns:
         rd, zf = scipy.signal.lfilter(tf.num, tf.den, df[col].values, zi=[])
-        min0s, max0s = _minmax_sos_zeros(tf.den[1], tf.den[2], zi[0], zi[1])
-        result.loc["min", col] = np.minimum(rd.min(axis="rows"), min0s)
-        result.loc["max", col] = np.maximum(rd.max(axis="rows"), min0s)
+        minmaxs = _minmax_sos_zeros(tf.den[1], tf.den[2], zf[0], zf[1])
+        result.loc["min", col] = np.minimum(rd.min(axis="rows"), minmaxs.min)
+        result.loc["max", col] = np.maximum(rd.max(axis="rows"), minmaxs.max)
 
     return result
 
