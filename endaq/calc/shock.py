@@ -45,8 +45,8 @@ def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
 def _minmax_sos_zeros(a1, a2, z0, z1):
     """Calculate the extrema when zero-padding a SOS biquad filter's input."""
     r = np.sqrt(a1 ** 2 - 4 * a2 + 0j)
-    a1_r_com = (a1 + r) / 2
-    a1_r_diff = (a1 - r) / 2
+    eigan_pos = (-a1 + r) / 2
+    eigan_neg = (-a1 - r) / 2
 
     def realish_or_err(x, rtol=1e-6, atol=1e-10):
         """Verify that the input is nearly real-valued; if not, raise Error."""
@@ -61,12 +61,9 @@ def _minmax_sos_zeros(a1, a2, z0, z1):
     def z0_n(n):
         return realish_or_err(
             (
-                -a2 * z0 * ((-a1_r_com) ** (n + 1) - (-a1_r_diff) ** (n + 1))
+                -a2 * z0 * (eigan_neg ** (n + 1) - eigan_pos ** (n + 1))
                 + z1
-                * (
-                    (-a1_r_com) ** (n + 1) * a1_r_diff
-                    - (-a1_r_diff) ** (n + 1) * a1_r_com
-                )
+                * (eigan_pos ** (n + 1) * eigan_neg - eigan_neg ** (n + 1) * eigan_pos)
             )
             / (a2 * r)
         )
@@ -74,8 +71,8 @@ def _minmax_sos_zeros(a1, a2, z0, z1):
     def z1_n(n):
         return realish_or_err(
             (
-                -a2 * z0 * (-((-a1_r_com) ** n) + (-a1_r_diff) ** n)
-                + z1 * ((-a1_r_com) ** n * (-a1_r_diff) + (-a1_r_diff) ** n * a1_r_com)
+                -a2 * z0 * (eigan_pos ** n - eigan_neg ** n)
+                + z1 * (eigan_neg ** n * eigan_pos - eigan_pos ** n * eigan_neg)
             )
             / r
         )
@@ -83,21 +80,21 @@ def _minmax_sos_zeros(a1, a2, z0, z1):
     def n_opt(z0, z1):
         return np.real(
             np.log(
-                np.log(-a1_r_com)
-                * (z0 * a1_r_com - z1)
-                / (np.log(-a1_r_diff) * (z0 * a1_r_diff - z1))
+                np.log(eigan_neg)
+                * (z0 * eigan_neg + z1)
+                / (np.log(eigan_pos) * (z0 * eigan_pos + z1))
             )
-            / np.log(a1_r_diff / a1_r_com)
+            / np.log(eigan_pos / eigan_neg)
         )
 
     def n_zero(z0, z1):
         return np.real(
-            np.log((z0 * a1_r_com - z1) / (z0 * a1_r_diff - z1))
-            / np.log(a1_r_diff / a1_r_com)
+            np.log((z0 * eigan_neg + z1) / (z0 * eigan_pos + z1))
+            / np.log(eigan_pos / eigan_neg)
         )
 
     def n_half_period(n_opt1):
-        return np.pi / np.angle(-a1_r_diff)
+        return np.pi / np.angle(eigan_pos)
 
     n1 = n_opt(z0, z1)
     N_half = n_half_period(n1)
