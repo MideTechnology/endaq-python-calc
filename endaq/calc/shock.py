@@ -54,7 +54,7 @@ def _minmax_rel_displ(
 
     tf = _pvss_transfer_func(omega, damp, dt)
 
-    columns = ["resultant"] if aggregate_axes else df.columns
+    columns = ["Resultant"] if aggregate_axes else df.columns
     result = pd.DataFrame(index=["min", "max"], columns=columns)
 
     rd, _zf = scipy.signal.lfilter(
@@ -100,7 +100,7 @@ def pseudo_velocity(
         return pd.DataFrame(
             np.maximum(results[0], results[1]),
             index=pd.Series(freqs, name="frequency (Hz)"),
-            columns=(["resultant"] if aggregate_axes else df.columns),
+            columns=(["Resultant"] if aggregate_axes else df.columns),
         )
 
     return namedtuple("PseudoVelocityResults", "neg pos")(
