@@ -24,6 +24,8 @@ def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
     if isinstance(dt, (np.timedelta64, pd.Timedelta)):
         dt = dt / np.timedelta64(1, "s")
 
+    # While the transient response is correct, it is technically unstable.
+    # Thus running this will raise a `BadCoefficients` warning.
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
 
@@ -38,12 +40,34 @@ def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
     )
 
 
+def rel_accel(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
+    """Calculate the relative acceleration for a SDOF system."""
+    # Generate the transfer function
+    #   H(s) = L{z"(t)}(s) / L{y"(t)}(s) = Z(s)/Y(s)
+    # for the PDE
+    #   z" + (2ζω)z' + (ω^2)z = -y"
+    dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
+    if isinstance(dt, (np.timedelta64, pd.Timedelta)):
+        dt = dt / np.timedelta64(1, "s")
+
+    tf = scipy.signal.TransferFunction(
+        [-1, 0, 0],
+        [1, 2 * damp * omega, omega ** 2],
+    ).to_discrete(dt=dt)
+
+    return df.apply(
+        functools.partial(scipy.signal.lfilter, tf.num, tf.den, axis=0),
+        raw=True,
+    )
+
+
 def pseudo_velocity(
     df: pd.DataFrame,
     freqs: np.ndarray,
     damp: float = 0,
     two_sided: bool = False,
     aggregate_axes: bool = False,
+    use_rel_accel=True,
 ) -> pd.DataFrame:
     """The pseudo velocity of an acceleration signal."""
     if two_sided and aggregate_axes:
@@ -58,13 +82,22 @@ def pseudo_velocity(
         dtype=np.float64,
     )
 
-    for i_nd in np.ndindex(freqs.shape):
-        rd = rel_displ(df, omega[i_nd], damp).to_numpy()
-        if aggregate_axes:
-            rd = L2_norm(rd, axis=-1, keepdims=True)
+    if use_rel_accel:
+        for i_nd in np.ndindex(freqs.shape):
+            rd = rel_accel(df, omega[i_nd], damp).to_numpy()
+            if aggregate_axes:
+                rd = L2_norm(rd, axis=-1, keepdims=True)
 
-        results[(0,) + i_nd] = -omega[i_nd] * rd.min(axis=0)
-        results[(1,) + i_nd] = omega[i_nd] * rd.max(axis=0)
+            results[(0,) + i_nd] = -(1 / omega[i_nd]) * rd.min(axis=0)
+            results[(1,) + i_nd] = (1 / omega[i_nd]) * rd.max(axis=0)
+    else:
+        for i_nd in np.ndindex(freqs.shape):
+            rd = rel_displ(df, omega[i_nd], damp).to_numpy()
+            if aggregate_axes:
+                rd = L2_norm(rd, axis=-1, keepdims=True)
+
+            results[(0,) + i_nd] = -omega[i_nd] * rd.min(axis=0)
+            results[(1,) + i_nd] = omega[i_nd] * rd.max(axis=0)
 
     if aggregate_axes or not two_sided:
         return pd.DataFrame(
