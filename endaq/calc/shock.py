@@ -67,7 +67,7 @@ def pseudo_velocity(
     damp: float = 0,
     two_sided: bool = False,
     aggregate_axes: bool = False,
-    use_rel_accel=True,
+    use_abs_accel=True,
 ) -> pd.DataFrame:
     """The pseudo velocity of an acceleration signal."""
     if two_sided and aggregate_axes:
@@ -82,7 +82,7 @@ def pseudo_velocity(
         dtype=np.float64,
     )
 
-    if use_rel_accel:
+    if use_abs_accel:
         for i_nd in np.ndindex(freqs.shape):
             rd = abs_accel(df, omega[i_nd], damp).to_numpy()
             if aggregate_axes:
