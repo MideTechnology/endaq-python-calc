@@ -42,78 +42,85 @@ def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
     )
 
 
-def _minmax_sos_zeros(a1, a2, z0, z1):
-    """Calculate the extrema when zero-padding a SOS biquad filter's input."""
-    r = np.sqrt(a1 ** 2 - 4 * a2 + 0j)
-    eigan_pos = (-a1 + r) / 2
-    eigan_neg = (-a1 - r) / 2
+class BiquadProperties:
+    __slots__ = ["a1", "a2", "_root", "_eigan_pos", "_eigan_neg"]
 
-    def realish_or_err(x, rtol=1e-6, atol=1e-10):
-        """Verify that the input is nearly real-valued; if not, raise Error."""
-        result = np.where(
-            (np.abs(np.imag(x)) < atol) | (np.abs(np.imag(x) / np.real(x)) <= rtol),
-            np.real(x),
-            np.nan,
-        )
-        assert np.all(~np.isnan(result))
-        return result
+    def __init__(self, a1, a2):
+        self.a1 = a1
+        self.a2 = a2
+        self._root = np.sqrt(a1 ** 2 - 4 * a2 + 0j)
+        self._eigan_pos = (-a1 + self._root) / 2
+        self._eigan_neg = (-a1 - self._root) / 2
 
-    def z0_n(n):
-        return realish_or_err(
+    def z0_n(self, z0, z1, n):
+        return np.real(
             (
-                -a2 * z0 * (eigan_neg ** (n + 1) - eigan_pos ** (n + 1))
+                -self.a2
+                * z0
+                * (self._eigan_neg ** (n + 1) - self._eigan_pos ** (n + 1))
                 + z1
-                * (eigan_pos ** (n + 1) * eigan_neg - eigan_neg ** (n + 1) * eigan_pos)
+                * (
+                    self._eigan_pos ** (n + 1) * self._eigan_neg
+                    - self._eigan_neg ** (n + 1) * self._eigan_pos
+                )
             )
-            / (a2 * r)
+            / (self.a2 * self._root)
         )
 
-    def z1_n(n):
-        return realish_or_err(
+    def z1_n(self, n, z0, z1):
+        return np.real(
             (
-                -a2 * z0 * (eigan_pos ** n - eigan_neg ** n)
-                + z1 * (eigan_neg ** n * eigan_pos - eigan_pos ** n * eigan_neg)
+                -self.a2 * z0 * (self._eigan_pos ** n - self._eigan_neg ** n)
+                + z1
+                * (
+                    self._eigan_neg ** n * self._eigan_pos
+                    - self._eigan_pos ** n * self._eigan_neg
+                )
             )
-            / r
+            / self._root
         )
 
-    def n_opt(z0, z1):
+    def n_opt(self, z0, z1):
         return np.real(
             np.log(
-                np.log(eigan_neg)
-                * (z0 * eigan_neg + z1)
-                / (np.log(eigan_pos) * (z0 * eigan_pos + z1))
+                np.log(self._eigan_neg)
+                * (z0 * self._eigan_neg + z1)
+                / (np.log(self._eigan_pos) * (z0 * self._eigan_pos + z1))
             )
-            / np.log(eigan_pos / eigan_neg)
+            / np.log(self._eigan_pos / self._eigan_neg)
         )
 
-    def n_zero(z0, z1):
+    def n_zero(self, z0, z1):
         return np.real(
-            np.log((z0 * eigan_neg + z1) / (z0 * eigan_pos + z1))
-            / np.log(eigan_pos / eigan_neg)
+            np.log((z0 * self._eigan_neg + z1) / (z0 * self._eigan_pos + z1))
+            / np.log(self._eigan_pos / self._eigan_neg)
         )
 
-    def n_half_period(n_opt1):
-        return np.pi / np.angle(eigan_pos)
+    @property
+    def n_period(self):
+        return 2 * np.pi / np.angle(self._eigan_pos)
 
-    n1 = n_opt(z0, z1)
-    N_half = n_half_period(n1)
-    n1 = n1 % N_half
-    n2 = n1 + N_half
+    def extrema(self, z0, z1):
+        """Calculate the extrema when zero-padding a SOS biquad filter's input."""
 
-    y_n1, y_n2 = z0_n(n1), z0_n(n2)
+        n1 = self.n_opt(z0, z1)
+        N_half = self.n_period / 2
+        n1 = n1 % N_half
+        n2 = n1 + N_half
 
-    mins, maxs = sorted(
-        [
-            (n1, y_n1),
-            (n2, y_n2),
-        ],
-        key=lambda x: x[1],
-    )
+        y_n1, y_n2 = self.z0_n(z0, z1, n1), self.z0_n(z0, z1, n2)
 
-    return namedtuple("SosFilterStruct", "imin, min, imax, max")(
-        imin=mins[0], min=mins[1], imax=maxs[0], max=maxs[1]
-    )
+        mins, maxs = sorted(
+            [
+                (n1, y_n1),
+                (n2, y_n2),
+            ],
+            key=lambda x: x[1],
+        )
+
+        return namedtuple("BiquadFilterExtrema", "imin, min, imax, max")(
+            imin=mins[0], min=mins[1], imax=maxs[0], max=maxs[1]
+        )
 
 
 def _minmax_rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
@@ -127,7 +134,7 @@ def _minmax_rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.Dat
     result = pd.DataFrame(index=["min", "max"], columns=df.columns)
     for col in df.columns:
         rd, zf = scipy.signal.lfilter(tf.num, tf.den, df[col].values, zi=[])
-        minmaxs = _minmax_sos_zeros(tf.den[1], tf.den[2], zf[0], zf[1])
+        minmaxs = BiquadProperties(tf.den[1], tf.den[2]).extrema(zf[0], zf[1])
         result.loc["min", col] = np.minimum(rd.min(axis="rows"), minmaxs.min)
         result.loc["max", col] = np.maximum(rd.max(axis="rows"), minmaxs.max)
 

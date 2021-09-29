@@ -102,7 +102,7 @@ def test_minmax_sos_zeros(ai_zi):
     hyp.assume(len(sign_changes) >= 2)
     hyp.assume(sign_changes[1] - sign_changes[0] > 10)
 
-    calc_result = shock._minmax_sos_zeros(a1, a2, z0, z1)
+    calc_result = shock.BiquadProperties(a1, a2).extrema(z0, z1)
 
     i1, i2 = int(np.floor(calc_result.imin)), int(np.ceil(calc_result.imin))
     # Check that the peak is "correct"
