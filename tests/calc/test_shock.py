@@ -69,18 +69,29 @@ def test_rel_displ(freq, damp):
     damp=hyp_st.floats(0, 1, exclude_max=True),
     factor=hyp_st.floats(-1e2, 1e2),
     aggregate_axes=hyp_st.booleans(),
+    use_abs_accel=hyp_st.booleans(),
 )
-def test_pseudo_velocity_linearity(df_accel, freq, damp, factor, aggregate_axes):
+def test_pseudo_velocity_linearity(
+    df_accel, freq, damp, factor, aggregate_axes, use_abs_accel
+):
     pd.testing.assert_frame_equal(
         shock.pseudo_velocity(
-            factor * df_accel, [freq], damp=damp, aggregate_axes=aggregate_axes
+            factor * df_accel,
+            [freq],
+            damp=damp,
+            aggregate_axes=aggregate_axes,
+            use_abs_accel=use_abs_accel,
         ),
-        (
-            factor
-            * shock.pseudo_velocity(
-                df_accel, [freq], damp=damp, aggregate_axes=aggregate_axes
+        np.abs(
+            shock.pseudo_velocity(
+                df_accel,
+                [freq],
+                damp=damp,
+                aggregate_axes=aggregate_axes,
+                use_abs_accel=use_abs_accel,
             )
-        ).abs(),
+            * factor
+        ),
     )
 
 
@@ -91,9 +102,10 @@ def test_pseudo_velocity_linearity(df_accel, freq, damp, factor, aggregate_axes)
         elements=hyp_st.floats(1e-20, 1e20),
     ).map(lambda array: pd.DataFrame(array, index=np.arange(1, 41))),
     damp=hyp_st.floats(0, 0.2),
+    use_abs_accel=hyp_st.booleans(),
 )
 @hyp.settings(deadline=None)  # this test tends to timeout
-def test_enveloping_half_sine(df_pvss, damp):
+def test_enveloping_half_sine(df_pvss, damp, use_abs_accel):
     ampl, T = shock.enveloping_half_sine(df_pvss, damp=damp)
     hyp.note(f"pulse amplitude: {ampl}")
     hyp.note(f"pulse duration: {T}")
@@ -109,7 +121,10 @@ def test_enveloping_half_sine(df_pvss, damp):
     pulse = np.zeros_like(times)
     pulse[: int(T * fs)] = ampl * np.sin((np.pi / T) * times[: int(T * fs)])
     pulse_pvss = shock.pseudo_velocity(
-        pd.DataFrame(pulse, index=times), freqs=df_pvss.index, damp=damp
+        pd.DataFrame(pulse, index=times),
+        freqs=df_pvss.index,
+        damp=damp,
+        use_abs_accel=use_abs_accel,
     )
 
     # This is an approximation -> give the result a fudge-factor for correctness
