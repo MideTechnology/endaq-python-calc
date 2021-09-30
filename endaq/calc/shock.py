@@ -83,8 +83,7 @@ class BiquadProperties:
     def n_opt(self, z0, z1):
         return np.real(
             np.log(
-                np.log(self._eigan_neg)
-                * (z0 * self._eigan_neg + z1)
+                (np.log(self._eigan_neg) * (z0 * self._eigan_neg + z1))
                 / (np.log(self._eigan_pos) * (z0 * self._eigan_pos + z1))
             )
             / np.log(self._eigan_pos / self._eigan_neg)
