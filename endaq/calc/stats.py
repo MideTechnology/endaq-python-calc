@@ -5,6 +5,7 @@ from typing import Union
 from collections.abc import Sequence
 
 import numpy as np
+import pandas as pd
 import scipy.ndimage
 
 
@@ -55,12 +56,17 @@ def rms(
 
 
 def rolling_rms(
-    array: np.ndarray,
+    df: pd.DataFrame,
     nperseg: int = 256,
     axis: typing.SupportsIndex = -1,
-):
+) -> pd.DataFrame:
     """Calculate a rolling RMS along a given axis."""
-    sq = array ** 2
-    window = np.ones(nperseg, dtype=array.dtype) / nperseg
+    dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
+    if isinstance(dt, (np.timedelta64, pd.Timedelta)):
+        dt = dt / np.timedelta64(1, "s")
+
+    sq = df.values ** 2
+    window = np.full(nperseg, 1 / (dt * nperseg))
     mean_sq = scipy.ndimage.convolve1d(sq, window, axis=axis, mode="mirror")
-    return np.sqrt(mean_sq)
+
+    return pd.DataFrame(mean_sq, index=df.index, columns=df.columns)
