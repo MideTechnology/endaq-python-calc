@@ -28,7 +28,7 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
     :param accel: the absolute acceleration y"
     :param omega: the natural frequency ω of the SDOF system
     :param damp: the damping coefficient ζ of the SDOF system
-    :returns: the relative displacement z of the SDOF system
+    :return: the relative displacement z of the SDOF system
     """
     # Generate the transfer function
     #   H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
