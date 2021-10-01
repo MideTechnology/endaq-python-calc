@@ -18,6 +18,14 @@ def butterworth(
 
     This function uses Butterworth filter designs, and implements the filter(s)
     as bi-directional digital biquad filters, split into second-order sections.
+
+    :param df: the input data; cutoff frequencies are relative to the
+        timestamps in `df.index`
+    :param low_cutoff: the low-frequency cutoff, if any
+    :param high_cutoff: the high-frequency cutoff, if any
+    :param half_order: half of the order of the filter; higher orders provide
+        more aggressive stopband reduction
+    :return: the filtered data
     """
     cutoff_freqs: Union[float, Tuple[float, float]]
     filter_type: str
