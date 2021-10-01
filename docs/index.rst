@@ -1,5 +1,5 @@
-enDAQ: the Python library for enDAQ sensors 
-===========================================
+enDAQ-Calc: a computational backend for vibration analysis
+==========================================================
 
 .. toctree::
    :maxdepth: 2
