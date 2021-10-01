@@ -16,6 +16,11 @@ TEST_REQUIRES = [
     "sympy",
     ]
 
+DOCS_REQUIRES = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    ]
+
 EXAMPLE_REQUIRES = [
     ]
 
@@ -43,6 +48,7 @@ setuptools.setup(
         install_requires=INSTALL_REQUIRES,
         extras_require={
             'test': INSTALL_REQUIRES + TEST_REQUIRES,
+            'docs': INSTALL_REQUIRES + DOCS_REQUIRES,
             'example': INSTALL_REQUIRES + EXAMPLE_REQUIRES,
             },
 )
