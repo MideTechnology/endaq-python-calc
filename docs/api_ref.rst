@@ -1,5 +1,5 @@
-enDAQ-Calc API Reference
-========================
+API Reference
+=============
 
 `endaq.calc.filters`
 --------------------
