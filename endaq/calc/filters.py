@@ -21,8 +21,10 @@ def butterworth(
 
     :param df: the input data; cutoff frequencies are relative to the
         timestamps in `df.index`
-    :param low_cutoff: the low-frequency cutoff, if any
-    :param high_cutoff: the high-frequency cutoff, if any
+    :param low_cutoff: the low-frequency cutoff, if any; frequencies below this
+        value are rejected, and frequencies above this value are preserved
+    :param high_cutoff: the high-frequency cutoff, if any; frequencies above
+        this value are rejected, and frequencies below this value are preserved
     :param half_order: half of the order of the filter; higher orders provide
         more aggressive stopband reduction
     :return: the filtered data
