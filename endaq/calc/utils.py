@@ -8,7 +8,7 @@ import pandas as pd
 
 
 def logfreqs(
-    df: pd.DateTime, init_freq: Optional[float] = None, bins_per_octave: float = 12
+    df: pd.DataFrame, init_freq: Optional[float] = None, bins_per_octave: float = 12
 ) -> np.ndarray:
     """
     Calculate a sequence of log-spaced frequencies for a given dataframe.
