@@ -72,4 +72,4 @@ def rolling_rms(
     window = np.full(nperseg, 1 / nperseg)
     mean_sq = scipy.ndimage.convolve1d(sq, window, axis=axis, mode="mirror")
 
-    return pd.DataFrame(mean_sq, index=df.index, columns=df.columns)
+    return pd.DataFrame(np.sqrt(mean_sq), index=df.index, columns=df.columns)
