@@ -1,10 +1,30 @@
 from __future__ import annotations
 
+import typing
 from typing import Optional
 import warnings
 
 import numpy as np
 import pandas as pd
+
+
+def sample_spacing(
+    df: pd.DataFrame, convert: typing.Literal[None, "to_seconds"] = "to_seconds"
+):
+    """
+    Calculate the average spacing between individual samples.
+
+    For time indices, this calculates the sampling period `dt`.
+
+    :param df: the inout data
+    :param convert: if `"to_seconds"` (default), convert any time objects into
+        floating-point seconds
+    """
+    dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
+    if convert == "to_seconds" and isinstance(dt, (np.timedelta64, pd.Timedelta)):
+        dt = dt / np.timedelta64(1, "s")
+
+    return dt
 
 
 def logfreqs(
