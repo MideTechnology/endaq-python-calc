@@ -65,8 +65,11 @@ def rolling_rms(
     if isinstance(dt, (np.timedelta64, pd.Timedelta)):
         dt = dt / np.timedelta64(1, "s")
 
+    # RMS = √(1/T ∫|x(t)|² dt)
+    #     ≈ √(∆t/T ∑|x[n]|²)
+    #     = √(1/N ∑|x[n]|²)
     sq = df.values ** 2
-    window = np.full(nperseg, 1 / (dt * nperseg))
+    window = np.full(nperseg, 1 / nperseg)
     mean_sq = scipy.ndimage.convolve1d(sq, window, axis=axis, mode="mirror")
 
     return pd.DataFrame(mean_sq, index=df.index, columns=df.columns)
