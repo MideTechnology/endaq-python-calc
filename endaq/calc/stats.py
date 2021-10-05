@@ -56,7 +56,13 @@ def rms(
 
 
 def rolling_rms(df: pd.DataFrame, nperseg: int = 256) -> pd.DataFrame:
-    """Calculate a rolling RMS along a given axis."""
+    """
+    Calculate a rolling RMS.
+
+    :param df: the input data
+    :param nperseg: the number of samples in the rolling window
+    :return: the output data
+    """
     dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
     if isinstance(dt, (np.timedelta64, pd.Timedelta)):
         dt = dt / np.timedelta64(1, "s")
