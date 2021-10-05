@@ -55,11 +55,7 @@ def rms(
     return np.sqrt(np.mean(np.abs(data) ** 2, axis=axis, keepdims=keepdims))
 
 
-def rolling_rms(
-    df: pd.DataFrame,
-    nperseg: int = 256,
-    axis: typing.SupportsIndex = -1,
-) -> pd.DataFrame:
+def rolling_rms(df: pd.DataFrame, nperseg: int = 256) -> pd.DataFrame:
     """Calculate a rolling RMS along a given axis."""
     dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
     if isinstance(dt, (np.timedelta64, pd.Timedelta)):
@@ -70,6 +66,6 @@ def rolling_rms(
     #     = √(1/N ∑|x[n]|²)
     sq = df.values ** 2
     window = np.full(nperseg, 1 / nperseg)
-    mean_sq = scipy.ndimage.convolve1d(sq, window, axis=axis, mode="mirror")
+    mean_sq = scipy.ndimage.convolve1d(sq, window, axis=0, mode="mirror")
 
     return pd.DataFrame(np.sqrt(mean_sq), index=df.index, columns=df.columns)
