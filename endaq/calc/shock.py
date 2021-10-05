@@ -13,6 +13,7 @@ import pandas as pd
 import scipy.signal
 
 from endaq.calc.stats import L2_norm
+from endaq.calc import utils
 
 
 def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
@@ -43,9 +44,7 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
     #   H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
     # for the PDE
     #   z" + (2ζω)z' + (ω²)z = -y"
-    dt = (accel.index[-1] - accel.index[0]) / (len(accel.index) - 1)
-    if isinstance(dt, (np.timedelta64, pd.Timedelta)):
-        dt = dt / np.timedelta64(1, "s")
+    dt = utils.sample_spacing(df)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", scipy.signal.BadCoefficients)

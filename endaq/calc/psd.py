@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 import scipy.signal
 
+from endaq.calc import utils
+
 
 def _np_histogram_nd(array, bins=10, weights=None, axis=-1, **kwargs):
     """Compute histograms over a specified axis."""
@@ -76,9 +78,7 @@ def welch(df: pd.DataFrame, bin_width: float = 1, **kwargs) -> pd.DataFrame:
         `SciPy Welch's method <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.welch.html>`_
         Documentation for the periodogram function wrapped internally.
     """
-    dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
-    if isinstance(dt, (np.timedelta64, pd.Timedelta)):
-        dt = dt / np.timedelta64(1, "s")
+    dt = utils.sample_spacing(df)
     fs = 1 / dt
 
     freqs, psd = scipy.signal.welch(

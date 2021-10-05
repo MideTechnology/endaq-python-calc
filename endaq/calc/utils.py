@@ -39,11 +39,9 @@ def logfreqs(
     :param bins_per_octave: the number of frequencies per octave
     :return: an array of log-spaced frequencies
     """
-    dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
-    if isinstance(dt, (np.timedelta64, pd.Timedelta)):
-        dt = dt / np.timedelta64(1, "s")
-
+    dt = sample_spacing(df)
     T = dt * len(df.index)
+
     if init_freq is None:
         init_freq = 1 / T
     elif 1 / init_freq > T:
