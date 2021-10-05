@@ -16,7 +16,7 @@ def sample_spacing(
 
     For time indices, this calculates the sampling period `dt`.
 
-    :param df: the inout data
+    :param df: the input data
     :param convert: if `"to_seconds"` (default), convert any time objects into
         floating-point seconds
     """
