@@ -6,8 +6,6 @@ from collections.abc import Sequence
 
 import numpy as np
 import numpy.typing as npt
-import pandas as pd
-import scipy.ndimage
 
 
 def L2_norm(
