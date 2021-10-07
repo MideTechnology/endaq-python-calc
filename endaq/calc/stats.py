@@ -5,6 +5,7 @@ from typing import Union
 from collections.abc import Sequence
 
 import numpy as np
+import pandas as pd
 import scipy.ndimage
 
 
@@ -52,15 +53,3 @@ def rms(
 ):
     """Calculate the root-mean-square (RMS) along a given axis."""
     return np.sqrt(np.mean(np.abs(data) ** 2, axis=axis, keepdims=keepdims))
-
-
-def rolling_rms(
-    array: np.ndarray,
-    nperseg: int = 256,
-    axis: typing.SupportsIndex = -1,
-):
-    """Calculate a rolling RMS along a given axis."""
-    sq = array ** 2
-    window = np.ones(nperseg, dtype=array.dtype) / nperseg
-    mean_sq = scipy.ndimage.convolve1d(sq, window, axis=axis, mode="mirror")
-    return np.sqrt(mean_sq)
