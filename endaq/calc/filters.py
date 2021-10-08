@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import scipy.signal
 
+from endaq.calc import utils
+
 
 def butterworth(
     df: pd.DataFrame,
@@ -49,9 +51,7 @@ def butterworth(
     else:
         return df
 
-    dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
-    if isinstance(dt, (np.timedelta64, pd.Timedelta)):
-        dt = dt / np.timedelta64(1, "s")
+    dt = utils.sample_spacing(df)
 
     sos_coeffs = scipy.signal.butter(
         N=half_order,
