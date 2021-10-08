@@ -28,6 +28,16 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
     :param omega: the natural frequency ω of the SDOF system
     :param damp: the damping coefficient ζ of the SDOF system
     :return: the relative displacement z of the SDOF system
+
+    .. seealso::
+
+        `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
+        Documentation for the transfer function class used to characterize the
+        relative displacement calculation.
+
+        `SciPy biquad filter <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html>`_
+        Documentation for the biquad function used to implement the transfer
+        function.
     """
     # Generate the transfer function
     #   H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
@@ -71,6 +81,16 @@ def pseudo_velocity(
     :param aggregate_axes: whether to calculate the column-wise resultant (`True`)
         or calculate the PVSS along each column independently (`False`; default)
     :return: the PVSS
+
+    .. seealso::
+
+        `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
+        Documentation for the transfer function class used to characterize the
+        relative displacement calculation.
+
+        `SciPy biquad filter <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html>`_
+        Documentation for the biquad function used to implement the transfer
+        function.
     """
     if two_sided and aggregate_axes:
         raise ValueError("cannot enable both options `two_sided` and `aggregate_axes`")

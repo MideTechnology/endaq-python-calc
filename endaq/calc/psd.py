@@ -70,6 +70,11 @@ def welch(df: pd.DataFrame, bin_width: float = 1, **kwargs) -> pd.DataFrame:
         defaults to 1 Hz
     :param **kwargs: other parameters to pass directly to `scipy.signal.welch`
     :return: a periodogram
+
+    .. seealso::
+
+        `SciPy Welch's method <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.welch.html>`_
+        Documentation for the periodogram function wrapped internally.
     """
     dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
     if isinstance(dt, (np.timedelta64, pd.Timedelta)):
