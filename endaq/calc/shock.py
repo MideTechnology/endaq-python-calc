@@ -12,7 +12,6 @@ import numpy.typing as npt
 import pandas as pd
 import scipy.signal
 
-
 from endaq.calc.stats import L2_norm
 
 
