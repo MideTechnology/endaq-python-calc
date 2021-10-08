@@ -22,7 +22,7 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
     The "relative" displacement follows the transfer function:
         H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
     for the PDE:
-        z" + (2ζω)z' + (ω^2)z = -y"
+        z" + (2ζω)z' + (ω²)z = -y"
 
     :param accel: the absolute acceleration y"
     :param omega: the natural frequency ω of the SDOF system
@@ -32,7 +32,7 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
     # Generate the transfer function
     #   H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
     # for the PDE
-    #   z" + (2ζω)z' + (ω^2)z = -y"
+    #   z" + (2ζω)z' + (ω²)z = -y"
     dt = (accel.index[-1] - accel.index[0]) / (len(accel.index) - 1)
     if isinstance(dt, (np.timedelta64, pd.Timedelta)):
         dt = dt / np.timedelta64(1, "s")

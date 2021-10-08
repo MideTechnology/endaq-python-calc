@@ -20,8 +20,8 @@ def L2_norm(
     :param axis: the axis/axes along which to aggregate; if `None`, the L2 norm
         is computed along the flattened array
     :param keepdims: if `True`, the axes which are reduced are left in the
-        result as dimensions with size one; if False, the reduced axes are
-        removed
+        result as dimensions with size one; if `False` (default), the reduced
+        axes are removed
     :return: an array containing the computed values
     """
     return np.sqrt(np.sum(np.abs(array) ** 2, axis=axis, keepdims=keepdims))
@@ -49,8 +49,8 @@ def max_abs(
     :param axis: the axis/axes along which to aggregate; if `None`, the
         absolute maximum is computed along the flattened array
     :param keepdims: if `True`, the axes which are reduced are left in the
-        result as dimensions with size one; if False, the reduced axes are
-        removed
+        result as dimensions with size one; if `False` (default), the reduced
+        axes are removed
     :return: an array containing the computed values
     """
     # Forbid complex-valued data
@@ -75,8 +75,8 @@ def rms(
     :param axis: the axis/axes along which to aggregate; if `None`, the RMS is
         computed along the flattened array
     :param keepdims: if `True`, the axes which are reduced are left in the
-        result as dimensions with size one; if False, the reduced axes are
-        removed
+        result as dimensions with size one; if `False` (default), the reduced
+        axes are removed
     :return: an array containing the computed values
     """
     return np.sqrt(np.mean(np.abs(array) ** 2, axis=axis, keepdims=keepdims))
