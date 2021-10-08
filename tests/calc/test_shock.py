@@ -75,12 +75,9 @@ def test_pseudo_velocity_linearity(df_accel, freq, damp, factor, aggregate_axes)
         shock.pseudo_velocity(
             factor * df_accel, [freq], damp=damp, aggregate_axes=aggregate_axes
         ),
-        (
-            factor
-            * shock.pseudo_velocity(
-                df_accel, [freq], damp=damp, aggregate_axes=aggregate_axes
-            )
-        ).abs(),
+        shock.pseudo_velocity(
+            df_accel, [freq], damp=damp, aggregate_axes=aggregate_axes
+        ).mul(factor).abs(),
     )
 
 
