@@ -44,7 +44,7 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
     #   H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
     # for the PDE
     #   z" + (2ζω)z' + (ω²)z = -y"
-    dt = utils.sample_spacing(df)
+    dt = utils.sample_spacing(accel)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
