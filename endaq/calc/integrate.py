@@ -7,14 +7,12 @@ import numpy as np
 import pandas as pd
 import scipy.integrate
 
-from . import filters
+from endaq.calc import filters, utils
 
 
 def _integrate(df: pd.DataFrame) -> pd.DataFrame:
     """Integrate data over an axis."""
-    dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
-    if isinstance(dt, (np.timedelta64, pd.Timedelta)):
-        dt = dt / np.timedelta64(1, "s")
+    dt = utils.sample_spacing(df)
 
     result = df.apply(
         functools.partial(scipy.integrate.cumulative_trapezoid, dx=dt, initial=0),
