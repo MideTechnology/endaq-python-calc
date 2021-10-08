@@ -8,19 +8,42 @@ import functools
 import warnings
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import scipy.signal
 
 from endaq.calc.stats import L2_norm
 
 
-def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
-    """Calculate the relative displacement for a SDOF system."""
+def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
+    """
+    Calculate the relative displacement for a SDOF system.
+
+    The "relative" displacement follows the transfer function:
+        H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
+    for the PDE:
+        z" + (2ζω)z' + (ω²)z = -y"
+
+    :param accel: the absolute acceleration y"
+    :param omega: the natural frequency ω of the SDOF system
+    :param damp: the damping coefficient ζ of the SDOF system
+    :return: the relative displacement z of the SDOF system
+
+    .. seealso::
+
+        `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
+        Documentation for the transfer function class used to characterize the
+        relative displacement calculation.
+
+        `SciPy biquad filter <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html>`_
+        Documentation for the biquad function used to implement the transfer
+        function.
+    """
     # Generate the transfer function
     #   H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
     # for the PDE
-    #   z" + (2ζω)z' + (ω^2)z = -y"
-    dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
+    #   z" + (2ζω)z' + (ω²)z = -y"
+    dt = (accel.index[-1] - accel.index[0]) / (len(accel.index) - 1)
     if isinstance(dt, (np.timedelta64, pd.Timedelta)):
         dt = dt / np.timedelta64(1, "s")
 
@@ -32,20 +55,43 @@ def rel_displ(df: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
             [1, 2 * damp * omega, omega ** 2],
         ).to_discrete(dt=dt)
 
-    return df.apply(
+    return accel.apply(
         functools.partial(scipy.signal.lfilter, tf.num, tf.den, axis=0),
         raw=True,
     )
 
 
 def pseudo_velocity(
-    df: pd.DataFrame,
-    freqs: np.ndarray,
+    accel: pd.DataFrame,
+    freqs: npt.ArrayLike,
     damp: float = 0,
     two_sided: bool = False,
     aggregate_axes: bool = False,
 ) -> pd.DataFrame:
-    """The pseudo velocity of an acceleration signal."""
+    """
+    Calculate the pseudo velocity shock spectrum (PVSS) of an acceleration signal.
+
+    :param accel: the absolute acceleration y"
+    :param freqs: the natural frequencies at which to calculate the PVSS
+    :param damp: the damping coefficient ζ, related to the Q-factor by ζ = 1/(2Q);
+        defaults to 0
+    :param two_sided: whether to return for each frequency:
+        both the maximum negative and positive shocks (`True`),
+        or simply the maximum absolute shock (`False`; default)
+    :param aggregate_axes: whether to calculate the column-wise resultant (`True`)
+        or calculate the PVSS along each column independently (`False`; default)
+    :return: the PVSS
+
+    .. seealso::
+
+        `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
+        Documentation for the transfer function class used to characterize the
+        relative displacement calculation.
+
+        `SciPy biquad filter <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html>`_
+        Documentation for the biquad function used to implement the transfer
+        function.
+    """
     if two_sided and aggregate_axes:
         raise ValueError("cannot enable both options `two_sided` and `aggregate_axes`")
     freqs = np.asarray(freqs)
@@ -54,12 +100,12 @@ def pseudo_velocity(
     omega = 2 * np.pi * freqs
 
     results = np.empty(
-        (2,) + freqs.shape + ((1,) if aggregate_axes else df.shape[1:]),
+        (2,) + freqs.shape + ((1,) if aggregate_axes else accel.shape[1:]),
         dtype=np.float64,
     )
 
     for i_nd in np.ndindex(freqs.shape):
-        rd = rel_displ(df, omega[i_nd], damp).to_numpy()
+        rd = rel_displ(accel, omega[i_nd], damp).to_numpy()
         if aggregate_axes:
             rd = L2_norm(rd, axis=-1, keepdims=True)
 
@@ -70,22 +116,29 @@ def pseudo_velocity(
         return pd.DataFrame(
             np.maximum(results[0], results[1]),
             index=pd.Series(freqs, name="frequency (Hz)"),
-            columns=(["resultant"] if aggregate_axes else df.columns),
+            columns=(["resultant"] if aggregate_axes else accel.columns),
         )
 
     return namedtuple("PseudoVelocityResults", "neg pos")(
         pd.DataFrame(
-            r, index=pd.Series(freqs, name="frequency (Hz)"), columns=df.columns
+            r, index=pd.Series(freqs, name="frequency (Hz)"), columns=accel.columns
         )
         for r in results
     )
 
 
 def enveloping_half_sine(
-    df_pvss: pd.DataFrame,
+    pvss: pd.DataFrame,
     damp: float = 0,
 ) -> Tuple[pd.Series, pd.Series]:
-    """Characterize a half-sine pulse whose PVSS envelopes the input."""
+    """
+    Characterize a half-sine pulse whose PVSS envelopes the input.
+
+    :param pvss: the PVSS to envelope
+    :param damp: the damping factor used to generate the input PVSS
+    :return: a tuple of amplitudes and periods, each pair of which describes a
+        half-sine pulse
+    """
 
     def amp_factor(damp):
         """
@@ -109,8 +162,8 @@ def enveloping_half_sine(
         PVSS_max = (1 / np.imag(a)) * np.imag(np.exp(a * t_max))
         return PVSS_max
 
-    max_pvss = df_pvss.max()
-    max_f_pvss = df_pvss.mul(df_pvss.index, axis=0).max()
+    max_pvss = pvss.max()
+    max_f_pvss = pvss.mul(pvss.index, axis=0).max()
 
     return namedtuple("HalfSinePulseParameters", "amplitude, period")(
         amplitude=2 * np.pi * max_f_pvss,

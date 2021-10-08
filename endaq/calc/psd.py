@@ -62,7 +62,20 @@ def _np_histogram_nd(array, bins=10, weights=None, axis=-1, **kwargs):
 
 
 def welch(df: pd.DataFrame, bin_width: float = 1, **kwargs) -> pd.DataFrame:
-    """Perform `scipy.signal.welch` with a specified frequency spacing."""
+    """
+    Perform `scipy.signal.welch` with a specified frequency spacing.
+
+    :param df: the input data
+    :param bin_width: the desired width of the resulting frequency bins, in Hz;
+        defaults to 1 Hz
+    :param **kwargs: other parameters to pass directly to `scipy.signal.welch`
+    :return: a periodogram
+
+    .. seealso::
+
+        `SciPy Welch's method <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.welch.html>`_
+        Documentation for the periodogram function wrapped internally.
+    """
     dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
     if isinstance(dt, (np.timedelta64, pd.Timedelta)):
         dt = dt / np.timedelta64(1, "s")
@@ -77,7 +90,13 @@ def welch(df: pd.DataFrame, bin_width: float = 1, **kwargs) -> pd.DataFrame:
 
 
 def differentiate(df: pd.DataFrame, n: float = 1) -> pd.DataFrame:
-    """Perform time-domain differentiation on periodogram data."""
+    """
+    Perform time-domain differentiation on periodogram data.
+
+    :param df: a periodogram
+    :param n: the time derivative order; negative orders represent integration
+    :return: a periodogram of the time-derivated data
+    """
     # Involves a division by zero for n < 0
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
@@ -102,9 +121,9 @@ def to_jagged(
     :param df: the returned values from `endaq.calc.psd.welch`
     :param freq_splits: the boundaries of the frequency bins; must be strictly
         increasing
-    :param axis: same as the axis parameter provided to `scipy.signal.welch`
     :param agg: the method for aggregating values into bins; 'mean' preserves
         the PSD's area-under-the-curve, 'sum' preserves the PSD's "energy"
+    :return: a periodogram with the given frequency spacing
     """
     freq_splits = np.asarray(freq_splits)
     if not np.all(np.diff(freq_splits, prepend=0) > 0):
@@ -153,7 +172,16 @@ def to_jagged(
 def to_octave(
     df: pd.DataFrame, fstart: float = 1, octave_bins: float = 12, **kwargs
 ) -> pd.DataFrame:
-    """Calculate a periodogram over log-spaced frequency bins."""
+    """
+    Calculate a periodogram over log-spaced frequency bins.
+
+    :param df: the returned values from `endaq.calc.psd.welch`
+    :param fstart: the first frequency bin, in Hz; defaults to 1 Hz
+    :param octave_bins: the number of frequency bins in each octave; defaults
+        to 12
+    :param **kwargs: other parameters to pass directly to `to_jagged`
+    :return: a periodogram with the given logarithmic frequency spacing
+    """
     max_f = df.index.max()
 
     octave_step = 1 / octave_bins
@@ -175,10 +203,16 @@ def to_octave(
 
 
 def vc_curves(
-    df: pd.DataFrame, fstart: float = 1, octave_bins: float = 12
+    accel_psd: pd.DataFrame, fstart: float = 1, octave_bins: float = 12
 ) -> pd.DataFrame:
     """
     Calculate Vibration Criterion (VC) curves from an acceration periodogram.
+
+    :param accel_psd: a periodogram of the input acceleration
+    :param fstart: the first frequency bin
+    :param octave_bins: the number of frequency bins in each octave; defaults
+        to 12
+    :return: the Vibration Criterion (VC) curve of the input acceleration
     """
     """
     # Theory behind the calculation
@@ -210,7 +244,7 @@ def vc_curves(
     be integrated into velocity. This can be done in the frequency domain
     by replacing |X(2πf)|^2 with (1/2πf)^2 |X(2πf)|^2.
     """
-    df_vel = differentiate(df, n=-1)
+    df_vel = differentiate(accel_psd, n=-1)
     df_vel_oct = to_octave(
         df_vel,
         fstart=fstart,  # Hz
@@ -220,4 +254,4 @@ def vc_curves(
 
     # The PSD must already scale by ∆f -> need only scale by √∆f?
     # TODO make `density` parameter, scale differently depending on mode
-    return np.sqrt(df.index[1]) * df_vel_oct.apply(np.sqrt)
+    return np.sqrt(accel_psd.index[1]) * df_vel_oct.apply(np.sqrt)

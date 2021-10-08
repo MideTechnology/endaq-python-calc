@@ -18,6 +18,21 @@ def butterworth(
 
     This function uses Butterworth filter designs, and implements the filter(s)
     as bi-directional digital biquad filters, split into second-order sections.
+
+    :param df: the input data; cutoff frequencies are relative to the
+        timestamps in `df.index`
+    :param low_cutoff: the low-frequency cutoff, if any; frequencies below this
+        value are rejected, and frequencies above this value are preserved
+    :param high_cutoff: the high-frequency cutoff, if any; frequencies above
+        this value are rejected, and frequencies below this value are preserved
+    :param half_order: half of the order of the filter; higher orders provide
+        more aggressive stopband reduction
+    :return: the filtered data
+
+    .. seealso::
+
+        `SciPy Butterworth filter design <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.butter.html>`_
+        Documentation for the butterworth filter design function.
     """
     cutoff_freqs: Union[float, Tuple[float, float]]
     filter_type: str
