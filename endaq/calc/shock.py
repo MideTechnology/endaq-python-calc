@@ -119,10 +119,12 @@ def pseudo_velocity(
         )
 
     return namedtuple("PseudoVelocityResults", "neg pos")(
-        pd.DataFrame(
-            r, index=pd.Series(freqs, name="frequency (Hz)"), columns=accel.columns
+        *(
+            pd.DataFrame(
+                r, index=pd.Series(freqs, name="frequency (Hz)"), columns=accel.columns
+            )
+            for r in results
         )
-        for r in results
     )
 
 

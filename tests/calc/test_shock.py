@@ -96,7 +96,9 @@ def test_pseudo_velocity_linearity(
         two_sided=two_sided,
     )
     if two_sided:
-        calc_result_postscale = sorted(df_calc * factor for df_calc in calc_result)
+        calc_result_postscale = tuple(
+            df_calc * np.abs(factor) for df_calc in calc_result
+        )[slice(None) if factor >= 0 else slice(None, None, -1)]
         for prescale, postscale in zip(calc_result_prescale, calc_result_postscale):
             pd.testing.assert_frame_equal(prescale, postscale)
     else:
