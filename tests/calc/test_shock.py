@@ -68,14 +68,19 @@ def test_rel_displ(freq, damp):
     freq=hyp_st.floats(1, 20),
     damp=hyp_st.floats(0, 1, exclude_max=True),
     factor=hyp_st.floats(-1e2, 1e2),
-    aggregate_axes=hyp_st.booleans(),
-    two_sided=hyp_st.booleans(),
+    aggregate_axes_two_sided=hyp_st.sampled_from(
+        [(False, False), (False, True), (True, False)]
+    ),
 )
 def test_pseudo_velocity_linearity(
-    df_accel, freq, damp, factor, aggregate_axes, two_sided
+    df_accel,
+    freq,
+    damp,
+    factor,
+    aggregate_axes_two_sided,
 ):
-    if aggregate_axes:
-        two_sided = False
+    aggregate_axes, two_sided = aggregate_axes_two_sided
+
     calc_result = shock.pseudo_velocity(
         df_accel,
         [freq],
