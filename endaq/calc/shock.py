@@ -16,6 +16,22 @@ from endaq.calc.stats import L2_norm
 from endaq.calc import utils
 
 
+def _rel_displ_transfer_func(omega: float, damp: float = 0, dt: float = 1):
+    """
+    Generate the transfer function
+       H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
+    for the PDE
+       z" + (2ζω)z' + (ω²)z = -y"
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
+
+        return scipy.signal.TransferFunction(
+            [-1],
+            [1, 2 * damp * omega, omega ** 2],
+        ).to_discrete(dt=dt)
+
+
 def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
     """
     Calculate the relative displacement for a SDOF system.
@@ -40,19 +56,8 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
         Documentation for the biquad function used to implement the transfer
         function.
     """
-    # Generate the transfer function
-    #   H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
-    # for the PDE
-    #   z" + (2ζω)z' + (ω²)z = -y"
     dt = utils.sample_spacing(accel)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
-
-        tf = scipy.signal.TransferFunction(
-            [-1],
-            [1, 2 * damp * omega, omega ** 2],
-        ).to_discrete(dt=dt)
+    tf = _rel_displ_transfer_func(omega, damp, dt)
 
     return accel.apply(
         functools.partial(scipy.signal.lfilter, tf.num, tf.den, axis=0),
