@@ -9,7 +9,6 @@ import functools
 import warnings
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 import scipy.signal
 
@@ -137,7 +136,7 @@ def abs_accel(accel: pd.DataFrame, omega: float, damp: float = 0.0) -> pd.DataFr
 
 def shock_spectrum(
     accel: pd.DataFrame,
-    freqs: npt.ArrayLike,
+    freqs: np.ndarray,
     damp: float = 0.0,
     mode: typing.Literal["srs", "pvss"] = "srs",
     two_sided: bool = False,
