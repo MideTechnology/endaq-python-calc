@@ -18,7 +18,7 @@ TEST_REQUIRES = [
 
 DOCS_REQUIRES = [
     "sphinx",
-    "sphinx-rtd-theme",
+    "pydata_sphinx_theme",
     ]
 
 EXAMPLE_REQUIRES = [
