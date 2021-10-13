@@ -107,9 +107,11 @@ def pseudo_velocity(
         (2,) + freqs.shape + ((1,) if aggregate_axes else accel.shape[1:]),
         dtype=np.float64,
     )
+    dt = utils.sample_spacing(accel)
 
     for i_nd in np.ndindex(freqs.shape):
-        rd = rel_displ(accel, omega[i_nd], damp).to_numpy()
+        tf = _rel_displ_transfer_func(omega[i_nd], damp, dt)
+        rd = scipy.signal.lfilter(tf.num, tf.den, accel.to_numpy(), axis=0)
         if aggregate_axes:
             rd = L2_norm(rd, axis=-1, keepdims=True)
 
