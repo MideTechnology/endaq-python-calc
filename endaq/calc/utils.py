@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import annotations
 
 import typing
-from typing import Optional
+from typing import Optional, Union
 import warnings
 
 import numpy as np
@@ -56,3 +58,24 @@ def logfreqs(
         np.log2(1 / dt) - 1,
         1 / bins_per_octave,
     )
+
+
+def to_dB(data_rms: Union[float, np.ndarray], reference: float, squared=False):
+    """
+    Scale RMS data to units of decibels.
+
+    :param data_rms: the input RMS data
+    :param reference: the reference RMS value corresponding to 0dB
+    :param squared: whether the input data & reference value are pre-squared;
+        defaults to `False`
+    """
+    if reference <= 0:
+        raise ValueError("reference value must be strictly positive")
+
+    return (10 if squared else 20) * (np.log10(data_rms) - np.log10(reference))
+
+
+dB_refs = {
+    "SPL": 2e-5,  # Pascal
+    "audio_intensity": 1e-12,  # W/m²
+}
