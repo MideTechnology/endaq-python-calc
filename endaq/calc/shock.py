@@ -108,9 +108,11 @@ def pseudo_velocity(
         dtype=np.float64,
     )
     dt = utils.sample_spacing(accel)
-    fs = 1 / dt
     zi = np.zeros((2,) + accel.shape[1:])
-    zero_padding = np.zeros((int(fs // freqs.min()) + 1,) + accel.shape[1:])
+    T_padding = 1 / freqs.min()
+    if not two_sided:
+        T_padding /= 2
+    zero_padding = np.zeros((int(T_padding // dt) + 1,) + accel.shape[1:])
 
     for i_nd in np.ndindex(freqs.shape):
         tf = _rel_displ_transfer_func(omega[i_nd], damp, dt)
