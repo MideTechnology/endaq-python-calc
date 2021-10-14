@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import typing
 from typing import Tuple
 from collections import namedtuple
 import functools
@@ -114,26 +115,30 @@ def abs_accel(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
     )
 
 
-def pseudo_velocity(
+def shock_spectrum(
     accel: pd.DataFrame,
     freqs: npt.ArrayLike,
     damp: float = 0,
+    mode: typing.Literal["srs", "pvss"] = "srs",
     two_sided: bool = False,
     aggregate_axes: bool = False,
 ) -> pd.DataFrame:
     """
-    Calculate the pseudo velocity shock spectrum (PVSS) of an acceleration signal.
+    Calculate the shock spectrum of an acceleration signal.
 
     :param accel: the absolute acceleration y"
-    :param freqs: the natural frequencies at which to calculate the PVSS
+    :param freqs: the natural frequencies across which to calculate the spectrum
     :param damp: the damping coefficient ζ, related to the Q-factor by ζ = 1/(2Q);
         defaults to 0
+    :param mode: the type of spectrum to calculate:
+        - "srs" (default) specifies the Shock Response Spectrum (SRS)
+        - "pvss" specifies the Pseudo-Velocity Shock Spectrum (PVSS)
     :param two_sided: whether to return for each frequency:
         both the maximum negative and positive shocks (`True`),
         or simply the maximum absolute shock (`False`; default)
     :param aggregate_axes: whether to calculate the column-wise resultant (`True`)
-        or calculate the PVSS along each column independently (`False`; default)
-    :return: the PVSS
+        or calculate spectra along each column independently (`False`; default)
+    :return: the shock spectrum
 
     .. seealso::
 
@@ -152,6 +157,13 @@ def pseudo_velocity(
         raise ValueError("target frequencies must be in a 1D-array")
     omega = 2 * np.pi * freqs
 
+    if mode == "srs":
+        make_tf = _abs_accel_transfer_func
+    elif mode == "pvss":
+        make_tf = _rel_displ_transfer_func
+    else:
+        raise ValueError(f"invalid spectrum mode {mode:r}")
+
     results = np.empty(
         (2,) + freqs.shape + ((1,) if aggregate_axes else accel.shape[1:]),
         dtype=np.float64,
@@ -168,7 +180,7 @@ def pseudo_velocity(
     zero_padding = np.zeros((int(T_padding // dt) + 1,) + accel.shape[1:])
 
     for i_nd in np.ndindex(freqs.shape):
-        tf = _rel_displ_transfer_func(omega[i_nd], damp, dt)
+        tf = make_tf(omega[i_nd], damp, dt)
         rd, zf = scipy.signal.lfilter(tf.num, tf.den, accel.to_numpy(), zi=zi, axis=0)
         rd_padding, _ = scipy.signal.lfilter(
             tf.num, tf.den, zero_padding, zi=zf, axis=0
@@ -178,12 +190,11 @@ def pseudo_velocity(
             rd = L2_norm(rd, axis=-1, keepdims=True)
             rd_padding = L2_norm(rd_padding, axis=-1, keepdims=True)
 
-        results[(0,) + i_nd] = -omega[i_nd] * np.minimum(
-            rd.min(axis=0), rd_padding.min(axis=0)
-        )
-        results[(1,) + i_nd] = omega[i_nd] * np.maximum(
-            rd.max(axis=0), rd_padding.max(axis=0)
-        )
+        results[(0,) + i_nd] = -np.minimum(rd.min(axis=0), rd_padding.min(axis=0))
+        results[(1,) + i_nd] = np.maximum(rd.max(axis=0), rd_padding.max(axis=0))
+
+    if mode == "pvss":
+        results = results * omega[..., np.newaxis]
 
     if aggregate_axes or not two_sided:
         return pd.DataFrame(

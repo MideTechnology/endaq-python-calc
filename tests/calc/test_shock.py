@@ -67,31 +67,35 @@ def test_rel_displ(freq, damp):
     ).map(lambda array: pd.DataFrame(array, index=np.arange(40) * 1e-4)),
     freq=hyp_st.floats(1, 20),
     damp=hyp_st.floats(0, 1, exclude_max=True),
-    factor=hyp_st.floats(-1e2, 1e2),
+    mode=hyp_st.sampled_from(["srs", "pvss"]),
     aggregate_axes_two_sided=hyp_st.sampled_from(
         [(False, False), (False, True), (True, False)]
     ),
+    factor=hyp_st.floats(-1e2, 1e2),
 )
-def test_pseudo_velocity_linearity(
+def test_shock_spectrum_linearity(
     df_accel,
     freq,
     damp,
-    factor,
+    mode,
     aggregate_axes_two_sided,
+    factor,
 ):
     aggregate_axes, two_sided = aggregate_axes_two_sided
 
-    calc_result = shock.pseudo_velocity(
+    calc_result = shock.shock_spectrum(
         df_accel,
         [freq],
         damp=damp,
+        mode=mode,
         aggregate_axes=aggregate_axes,
         two_sided=two_sided,
     )
-    calc_result_prescale = shock.pseudo_velocity(
+    calc_result_prescale = shock.shock_spectrum(
         factor * df_accel,
         [freq],
         damp=damp,
+        mode=mode,
         aggregate_axes=aggregate_axes,
         two_sided=two_sided,
     )
@@ -121,30 +125,35 @@ def test_pseudo_velocity_linearity(
     ),
     freq=hyp_st.floats(1, 20),
     damp=hyp_st.floats(0, 1, exclude_max=True),
+    mode=hyp_st.sampled_from(["srs", "pvss"]),
     aggregate_axes_two_sided=hyp_st.sampled_from(
         [(False, False), (False, True), (True, False)]
     ),
 )
-def test_pseudo_velocity_zero_padding(df_accel, freq, damp, aggregate_axes_two_sided):
+def test_pseudo_velocity_zero_padding(
+    df_accel, freq, damp, mode, aggregate_axes_two_sided
+):
     aggregate_axes, two_sided = aggregate_axes_two_sided
 
     # Check that the padding is all zeros
     assert np.all(df_accel.iloc[40:] == 0)
 
     # First, we calculate the PVSS of the data as-is
-    calc_result = shock.pseudo_velocity(
+    calc_result = shock.shock_spectrum(
         df_accel.iloc[:40],
         [freq],
         damp=damp,
+        mode=mode,
         aggregate_axes=aggregate_axes,
         two_sided=two_sided,
     )
 
     # Now we re-run the PVSS on the full, zero-padded data
-    calc_result_padded = shock.pseudo_velocity(
+    calc_result_padded = shock.shock_spectrum(
         df_accel,
         [freq],
         damp=damp,
+        mode=mode,
         aggregate_axes=aggregate_axes,
         two_sided=two_sided,
     )
@@ -182,8 +191,8 @@ def test_enveloping_half_sine(df_pvss, damp):
     times = np.arange(int(fs * (T + 1 / df_pvss.index[0]))) / fs
     pulse = np.zeros_like(times)
     pulse[: int(T * fs)] = ampl * np.sin((np.pi / T) * times[: int(T * fs)])
-    pulse_pvss = shock.pseudo_velocity(
-        pd.DataFrame(pulse, index=times), freqs=df_pvss.index, damp=damp
+    pulse_pvss = shock.shock_spectrum(
+        pd.DataFrame(pulse, index=times), freqs=df_pvss.index, damp=damp, mode="pvss"
     )
 
     # This is an approximation -> give the result a fudge-factor for correctness
