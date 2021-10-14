@@ -146,7 +146,11 @@ def test_pseudo_velocity_zero_padding(df_accel, freq, damp, aggregate_axes_two_s
 
     # If the calculation is correct, there should be *no* amount of zero-padding
     # that changes the result
-    pd.testing.assert_frame_equal(calc_result, calc_result_padded)
+    if two_sided:
+        for i in range(2):
+            pd.testing.assert_frame_equal(calc_result[i], calc_result_padded[i])
+    else:
+        pd.testing.assert_frame_equal(calc_result, calc_result_padded)
 
 
 @hyp.given(
