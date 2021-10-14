@@ -72,7 +72,7 @@ def to_dB(data: np.ndarray, reference: float, squared=False):
     By convention, "decibel" units tend to operate on units of *power*. For
     units that are proportional to power *when squared* (e.g., volts, amps,
     pressure, etc.), their "decibel" representation is typically doubled (i.e.,
-    :math:`dB = 10 \\log20(...)`). Users should specify which scaling to use
+    :math:`dB = 10 \\log20(...)`). Users can specify which scaling to use
     with the `squared` parameter.
 
     ..note:: Decibels can**NOT** be calculated from negative values.
