@@ -107,11 +107,15 @@ def pseudo_velocity(
         (2,) + freqs.shape + ((1,) if aggregate_axes else accel.shape[1:]),
         dtype=np.float64,
     )
+
     dt = utils.sample_spacing(accel)
-    zi = np.zeros((2,) + accel.shape[1:])
-    T_padding = 1 / freqs.min()
+    T_padding = 1 / (
+        freqs.min() * np.sqrt(1 - damp ** 2)
+    )  # uses lowest damped frequency
     if not two_sided:
         T_padding /= 2
+
+    zi = np.zeros((2,) + accel.shape[1:])
     zero_padding = np.zeros((int(T_padding // dt) + 1,) + accel.shape[1:])
 
     for i_nd in np.ndindex(freqs.shape):
