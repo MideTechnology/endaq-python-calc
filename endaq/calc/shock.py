@@ -19,9 +19,9 @@ from endaq.calc import utils
 def _rel_displ_transfer_func(omega: float, damp: float = 0, dt: float = 1):
     """
     Generate the transfer function
-       H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
+        H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
     for the PDE
-       z" + (2ζω)z' + (ω²)z = -y"
+        z" + (2ζω)z' + (ω²)z = -y"
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
@@ -58,6 +58,55 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
     """
     dt = utils.sample_spacing(accel)
     tf = _rel_displ_transfer_func(omega, damp, dt)
+
+    return accel.apply(
+        functools.partial(scipy.signal.lfilter, tf.num, tf.den, axis=0),
+        raw=True,
+    )
+
+
+def _abs_accel_transfer_func(omega: float, damp: float = 0, dt: float = 1):
+    """
+    Generate the transfer function
+        H(s) = L{x"(t)}(s) / L{y"(t)}(s) = X(s)/Y(s)
+    for the PDE
+        x" + (2ζω)x' + (ω²)x = (2ζω)y' + (ω^2)y
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
+
+        return scipy.signal.TransferFunction(
+            [0, 2 * damp * omega, omega ** 2],
+            [1, 2 * damp * omega, omega ** 2],
+        ).to_discrete(dt=dt)
+
+
+def abs_accel(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
+    """
+    Calculate the absolute acceleration for a SDOF system.
+
+    The "absolute acceleration" follows the transfer function:
+        H(s) = L{x"(t)}(s) / L{y"(t)}(s) = X(s)/Y(s)
+    for the PDE:
+        x" + (2ζω)x' + (ω²)x = (2ζω)y' + (ω^2)y
+
+    :param accel: the absolute acceleration y"
+    :param omega: the natural frequency ω of the SDOF system
+    :param damp: the damping coefficient ζ of the SDOF system
+    :return: the absolute acceleration x" of the SDOF system
+
+    .. seealso::
+
+        `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
+        Documentation for the transfer function class used to characterize the
+        relative displacement calculation.
+
+        `SciPy biquad filter <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html>`_
+        Documentation for the biquad function used to implement the transfer
+        function.
+    """
+    dt = utils.sample_spacing(accel)
+    tf = _abs_accel_transfer_func(omega, damp, dt)
 
     return accel.apply(
         functools.partial(scipy.signal.lfilter, tf.num, tf.den, axis=0),
