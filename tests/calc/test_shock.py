@@ -68,20 +68,44 @@ def test_rel_displ(freq, damp):
     freq=hyp_st.floats(1, 20),
     damp=hyp_st.floats(0, 1, exclude_max=True),
     factor=hyp_st.floats(-1e2, 1e2),
-    aggregate_axes=hyp_st.booleans(),
+    aggregate_axes_two_sided=hyp_st.sampled_from(
+        [(False, False), (False, True), (True, False)]
+    ),
 )
-def test_pseudo_velocity_linearity(df_accel, freq, damp, factor, aggregate_axes):
-    pd.testing.assert_frame_equal(
-        shock.pseudo_velocity(
-            factor * df_accel, [freq], damp=damp, aggregate_axes=aggregate_axes
-        ),
-        (
-            factor
-            * shock.pseudo_velocity(
-                df_accel, [freq], damp=damp, aggregate_axes=aggregate_axes
-            )
-        ).abs(),
+def test_pseudo_velocity_linearity(
+    df_accel,
+    freq,
+    damp,
+    factor,
+    aggregate_axes_two_sided,
+):
+    aggregate_axes, two_sided = aggregate_axes_two_sided
+
+    calc_result = shock.pseudo_velocity(
+        df_accel,
+        [freq],
+        damp=damp,
+        aggregate_axes=aggregate_axes,
+        two_sided=two_sided,
     )
+    calc_result_prescale = shock.pseudo_velocity(
+        factor * df_accel,
+        [freq],
+        damp=damp,
+        aggregate_axes=aggregate_axes,
+        two_sided=two_sided,
+    )
+    if two_sided:
+        calc_result_postscale = tuple(
+            df_calc * np.abs(factor) for df_calc in calc_result
+        )[slice(None) if factor >= 0 else slice(None, None, -1)]
+        for prescale, postscale in zip(calc_result_prescale, calc_result_postscale):
+            pd.testing.assert_frame_equal(prescale, postscale)
+    else:
+        pd.testing.assert_frame_equal(
+            calc_result_prescale,
+            calc_result.mul(factor).abs(),
+        )
 
 
 @hyp.given(
