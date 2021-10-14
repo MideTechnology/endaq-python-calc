@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import typing
-from typing import Optional, Union
+from typing import Optional
 import warnings
 
 import numpy as np
@@ -60,19 +60,31 @@ def logfreqs(
     )
 
 
-def to_dB(data_rms: Union[float, np.ndarray], reference: float, squared=False):
+def to_dB(data: np.ndarray, reference: float, squared=False):
     """
-    Scale RMS data to units of decibels.
+    Scale data into units of decibels.
 
-    :param data_rms: the input RMS data
-    :param reference: the reference RMS value corresponding to 0dB
+    ..note:: Decibels can**NOT** be calculated from negative values.
+        E.g., to calculate dB on arbitrary time-series data, typically data is
+        first aggregated via a total or a rolling RMS or PSD, and the result is
+        then scaled into decibels.
+
+    :param data: the input data
+    :param reference: the reference value corresponding to 0dB
     :param squared: whether the input data & reference value are pre-squared;
         defaults to `False`
     """
     if reference <= 0:
         raise ValueError("reference value must be strictly positive")
 
-    return (10 if squared else 20) * (np.log10(data_rms) - np.log10(reference))
+    data = np.asarray(data)
+    if np.any(data < 0):
+        raise ValueError(
+            "cannot compute decibels from negative values (see the docstring"
+            " for details)"
+        )
+
+    return (10 if squared else 20) * (np.log10(data) - np.log10(reference))
 
 
 dB_refs = {
