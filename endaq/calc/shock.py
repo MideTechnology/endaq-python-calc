@@ -108,17 +108,27 @@ def pseudo_velocity(
         dtype=np.float64,
     )
     dt = utils.sample_spacing(accel)
-    zi = np.zeros()
+    fs = 1 / dt
+    zi = np.zeros((2,) + accel.shape[1:])
+    zero_padding = np.zeros((int(fs // freqs.min()) + 1,) + accel.shape[1:])
 
     for i_nd in np.ndindex(freqs.shape):
         tf = _rel_displ_transfer_func(omega[i_nd], damp, dt)
         rd, zf = scipy.signal.lfilter(tf.num, tf.den, accel.to_numpy(), zi=zi, axis=0)
+        rd_padding, _ = scipy.signal.lfilter(
+            tf.num, tf.den, zero_padding, zi=zf, axis=0
+        )
 
         if aggregate_axes:
             rd = L2_norm(rd, axis=-1, keepdims=True)
+            rd_padding = L2_norm(rd_padding, axis=-1, keepdims=True)
 
-        results[(0,) + i_nd] = -omega[i_nd] * rd.min(axis=0)
-        results[(1,) + i_nd] = omega[i_nd] * rd.max(axis=0)
+        results[(0,) + i_nd] = -omega[i_nd] * np.minimum(
+            rd.min(axis=0), rd_padding.min(axis=0)
+        )
+        results[(1,) + i_nd] = omega[i_nd] * np.maximum(
+            rd.max(axis=0), rd_padding.max(axis=0)
+        )
 
     if aggregate_axes or not two_sided:
         return pd.DataFrame(
