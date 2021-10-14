@@ -75,7 +75,6 @@ def to_dB(data: np.ndarray, reference: float, squared=False):
     :math:`dB = 10 \\log20(...)`). Users should specify which scaling to use
     with the `squared` parameter.
 
-
     ..note:: Decibels can**NOT** be calculated from negative values.
 
         For example, to calculate dB on arbitrary time-series data, typically
