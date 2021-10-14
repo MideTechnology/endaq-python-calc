@@ -6,7 +6,7 @@ import hypothesis.extra.numpy as hyp_np
 import numpy as np
 import pandas as pd
 
-from endaq.calc import shock
+from endaq.calc import utils, shock
 
 
 @hyp.given(
@@ -106,6 +106,47 @@ def test_pseudo_velocity_linearity(
             calc_result_prescale,
             calc_result.mul(factor).abs(),
         )
+
+
+@hyp.given(
+    df_accel=hyp_np.arrays(
+        dtype=np.float64,
+        shape=(40, 2),
+        elements=hyp_st.floats(1e-20, 1e20),
+    ).map(lambda array: pd.DataFrame(array, index=np.arange(40) * 1e-4)),
+    freq=hyp_st.floats(1, 20),
+    damp=hyp_st.floats(0, 1, exclude_max=True),
+    aggregate_axes_two_sided=hyp_st.sampled_from(
+        [(False, False), (False, True), (True, False)]
+    ),
+)
+def test_pseudo_velocity_zero_padding(df_accel, freq, damp, aggregate_axes_two_sided):
+    aggregate_axes, two_sided = aggregate_axes_two_sided
+    dt = utils.sample_spacing(df_accel)
+
+    # First, we calculate the PVSS of the data as-is
+    calc_result = shock.pseudo_velocity(
+        df_accel,
+        [freq],
+        damp=damp,
+        aggregate_axes=aggregate_axes,
+        two_sided=two_sided,
+    )
+
+    # Now we zero-pad the data, and re-run the PVSS
+    df_accel.append(df_accel * 0, ignore_index=True)
+    df_accel.index = dt * df_accel.index
+    calc_result_padded = shock.pseudo_velocity(
+        df_accel,
+        [freq],
+        damp=damp,
+        aggregate_axes=aggregate_axes,
+        two_sided=two_sided,
+    )
+
+    # If the calculation is correct, there should be *no* amount of zero-padding
+    # that changes the result
+    pd.testing.assert_frame_equal(calc_result, calc_result_padded)
 
 
 @hyp.given(
