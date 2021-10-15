@@ -16,6 +16,22 @@ from endaq.calc.stats import L2_norm
 from endaq.calc import utils
 
 
+def _rel_displ_transfer_func(omega: float, damp: float = 0, dt: float = 1):
+    """
+    Generate the transfer function
+       H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
+    for the PDE
+       z" + (2ζω)z' + (ω²)z = -y"
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
+
+        return scipy.signal.TransferFunction(
+            [-1],
+            [1, 2 * damp * omega, omega ** 2],
+        ).to_discrete(dt=dt)
+
+
 def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
     """
     Calculate the relative displacement for a SDOF system.
@@ -40,19 +56,8 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
         Documentation for the biquad function used to implement the transfer
         function.
     """
-    # Generate the transfer function
-    #   H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
-    # for the PDE
-    #   z" + (2ζω)z' + (ω²)z = -y"
     dt = utils.sample_spacing(accel)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
-
-        tf = scipy.signal.TransferFunction(
-            [-1],
-            [1, 2 * damp * omega, omega ** 2],
-        ).to_discrete(dt=dt)
+    tf = _rel_displ_transfer_func(omega, damp, dt)
 
     return accel.apply(
         functools.partial(scipy.signal.lfilter, tf.num, tf.den, axis=0),
@@ -103,13 +108,33 @@ def pseudo_velocity(
         dtype=np.float64,
     )
 
+    dt = utils.sample_spacing(accel)
+    T_padding = 1 / (
+        freqs.min() * np.sqrt(1 - damp ** 2)
+    )  # uses lowest damped frequency
+    if not two_sided:
+        T_padding /= 2
+
+    zi = np.zeros((2,) + accel.shape[1:])
+    zero_padding = np.zeros((int(T_padding // dt) + 1,) + accel.shape[1:])
+
     for i_nd in np.ndindex(freqs.shape):
-        rd = rel_displ(accel, omega[i_nd], damp).to_numpy()
+        tf = _rel_displ_transfer_func(omega[i_nd], damp, dt)
+        rd, zf = scipy.signal.lfilter(tf.num, tf.den, accel.to_numpy(), zi=zi, axis=0)
+        rd_padding, _ = scipy.signal.lfilter(
+            tf.num, tf.den, zero_padding, zi=zf, axis=0
+        )
+
         if aggregate_axes:
             rd = L2_norm(rd, axis=-1, keepdims=True)
+            rd_padding = L2_norm(rd_padding, axis=-1, keepdims=True)
 
-        results[(0,) + i_nd] = -omega[i_nd] * rd.min(axis=0)
-        results[(1,) + i_nd] = omega[i_nd] * rd.max(axis=0)
+        results[(0,) + i_nd] = -omega[i_nd] * np.minimum(
+            rd.min(axis=0), rd_padding.min(axis=0)
+        )
+        results[(1,) + i_nd] = omega[i_nd] * np.maximum(
+            rd.max(axis=0), rd_padding.max(axis=0)
+        )
 
     if aggregate_axes or not two_sided:
         return pd.DataFrame(

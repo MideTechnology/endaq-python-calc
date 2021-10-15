@@ -109,6 +109,56 @@ def test_pseudo_velocity_linearity(
 
 
 @hyp.given(
+    df_accel=hyp_np.arrays(
+        dtype=np.float64,
+        shape=(40, 2),
+        elements=hyp_st.floats(1e-20, 1e20),
+    ).map(
+        lambda array: pd.DataFrame(
+            np.concatenate([array, np.zeros_like(array)], axis=0),
+            index=np.arange(2 * array.shape[0]) * 1e-4,
+        )
+    ),
+    freq=hyp_st.floats(1, 20),
+    damp=hyp_st.floats(0, 1, exclude_max=True),
+    aggregate_axes_two_sided=hyp_st.sampled_from(
+        [(False, False), (False, True), (True, False)]
+    ),
+)
+def test_pseudo_velocity_zero_padding(df_accel, freq, damp, aggregate_axes_two_sided):
+    aggregate_axes, two_sided = aggregate_axes_two_sided
+
+    # Check that the padding is all zeros
+    assert np.all(df_accel.iloc[40:] == 0)
+
+    # First, we calculate the PVSS of the data as-is
+    calc_result = shock.pseudo_velocity(
+        df_accel.iloc[:40],
+        [freq],
+        damp=damp,
+        aggregate_axes=aggregate_axes,
+        two_sided=two_sided,
+    )
+
+    # Now we re-run the PVSS on the full, zero-padded data
+    calc_result_padded = shock.pseudo_velocity(
+        df_accel,
+        [freq],
+        damp=damp,
+        aggregate_axes=aggregate_axes,
+        two_sided=two_sided,
+    )
+
+    # If the calculation is correct, there should be *no* amount of zero-padding
+    # that changes the result
+    if two_sided:
+        for i in range(2):
+            pd.testing.assert_frame_equal(calc_result[i], calc_result_padded[i])
+    else:
+        pd.testing.assert_frame_equal(calc_result, calc_result_padded)
+
+
+@hyp.given(
     df_pvss=hyp_np.arrays(
         dtype=np.float64,
         shape=(40, 2),
