@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import annotations
 
 import typing
@@ -56,3 +58,48 @@ def logfreqs(
         np.log2(1 / dt) - 1,
         1 / bins_per_octave,
     )
+
+
+def to_dB(data: np.ndarray, reference: float, squared=False):
+    """
+    Scale data into units of decibels.
+
+    Decibels are a log-scaled ratio of some value against a reference;
+    typically this is expressed as follows:
+
+    ..math:: dB = 10 \\log10\\left( \\frac{x}{x_{\\text{ref}}} \\right)
+
+    By convention, "decibel" units tend to operate on units of *power*. For
+    units that are proportional to power *when squared* (e.g., volts, amps,
+    pressure, etc.), their "decibel" representation is typically doubled (i.e.,
+    :math:`dB = 10 \\log20(...)`). Users can specify which scaling to use
+    with the `squared` parameter.
+
+    ..note:: Decibels can**NOT** be calculated from negative values.
+
+        For example, to calculate dB on arbitrary time-series data, typically
+        data is first aggregated via a total or a rolling RMS or PSD, and the
+        non-negative result is then scaled into decibels.
+
+    :param data: the input data
+    :param reference: the reference value corresponding to 0dB
+    :param squared: whether the input data & reference value are pre-squared;
+        defaults to `False`
+    """
+    if reference <= 0:
+        raise ValueError("reference value must be strictly positive")
+
+    data = np.asarray(data)
+    if np.any(data < 0):
+        raise ValueError(
+            "cannot compute decibels from negative values (see the docstring"
+            " for details)"
+        )
+
+    return (10 if squared else 20) * (np.log10(data) - np.log10(reference))
+
+
+dB_refs = {
+    "SPL": 2e-5,  # Pascal
+    "audio_intensity": 1e-12,  # W/m²
+}

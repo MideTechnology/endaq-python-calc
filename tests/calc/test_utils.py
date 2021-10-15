@@ -40,3 +40,20 @@ def test_logfreqs(input_vars):
     assert calc_result[0] == pytest.approx(init_freq)
     assert fs / 2 ** (1 + 1 / bins_per_octave) < calc_result[-1] < fs / 2
     np.testing.assert_allclose(np.diff(np.log2(calc_result)), 1 / bins_per_octave)
+
+
+@hyp.given(value=hyp_st.floats(1e-7, 1e7))
+def test_to_dB_ref(value):
+    assert utils.to_dB(value, value) == 0
+
+
+@hyp.given(
+    value=hyp_st.floats(1e-7, 1e7),
+    reference=hyp_st.floats(1e-7, 1e7),
+    squared=hyp_st.booleans(),
+)
+def test_to_dB_scale(value, reference, squared):
+    scale = 10 if squared else 20
+    assert utils.to_dB(10 * value, reference, squared) == pytest.approx(
+        scale + utils.to_dB(value, reference, squared)
+    )
