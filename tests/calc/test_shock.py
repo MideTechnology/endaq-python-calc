@@ -47,8 +47,9 @@ def test_rel_displ(freq, damp):
 
     # Calculate expected result
     t = np.arange(1, 801) / fs
-    atten = omega * np.exp(1j * np.arccos(-damp))
-    assert np.real(atten) == pytest.approx(-omega * damp)
+    atten = omega * (-damp + 1j * np.sqrt(1 - damp ** 2))
+    assert np.angle(atten) == pytest.approx(np.arccos(-damp))
+    assert np.abs(atten) == pytest.approx(omega)
 
     expt_result = np.zeros_like(signal)
     expt_result[200:] = (-1 / np.imag(atten)) * np.imag(
@@ -99,6 +100,7 @@ def test_abs_accel(freq, damp):
     t = np.arange(1, 801) / fs
     atten = omega * (-damp + 1j * np.sqrt(1 - damp ** 2))
     assert np.angle(atten) == pytest.approx(np.arccos(-damp))
+    assert np.abs(atten) == pytest.approx(omega)
 
     expt_result = np.zeros_like(signal)
     expt_result[200:] = (2 / np.tan(np.angle(atten))) * np.imag(np.exp(t * atten)) + 1
