@@ -55,7 +55,7 @@ def test_rel_displ(freq, damp):
 
     # γ = -ζ + i√(1 - ζ²)
     # h(t) = (1/Im{γ}) Im{exp(γωt)}
-    # -> result = ∫h(t) dt
+    # -> result = {h * u}(t) = ∫h(t) dt
     #     = C + (1 / Im{γ}) Im{1/γω exp(γωt)}
     expt_result = np.zeros_like(signal)
     expt_result[200:] = (-1 / np.imag(atten)) * np.imag(
@@ -110,7 +110,7 @@ def test_abs_accel(freq, damp):
 
     # γ = -ζ + i√(1 - ζ²)
     # h(t) = (2ζω) Re{exp(γωt)} + ((1 - 2ζ)/Im{γ}) Im{exp(γωt)}
-    # -> result = ∫h(t) dt
+    # -> result = {h * u}(t) = ∫h(t) dt
     #     = C + (2ζω) Re{1/γω exp(γωt)} + ((1 - 2ζ)/Im{γ}) Im{1/γω exp(γωt)}
     expt_result = np.zeros_like(signal)
     expt_result[200:] = (
