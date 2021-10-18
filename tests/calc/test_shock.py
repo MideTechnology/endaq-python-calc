@@ -60,6 +60,54 @@ def test_rel_displ(freq, damp):
 
 
 @hyp.given(
+    freq=hyp_st.floats(12.5, 1000),
+    damp=hyp_st.floats(0, 1, exclude_max=True),
+)
+def test_abs_accel(freq, damp):
+    """
+    This test uses a step-function input acceleration. In a SDOF spring system,
+    the spring should be relaxed in the first portion where `a(t < t0) = 0`.
+    Once the acceleration flips on (`a(t > t0) = 1`), the mass should begin to
+    oscillate.
+
+    (This scenario is mathematically identical to having the mass pulled out
+    some distance and held steady with a constant force at `t=0`, then
+    releasing the mass at `t > t0` and letting it oscillate freely.)
+
+    This system is tested over a handful of different oscillation parameter
+    (i.e., frequency & damping rate) configurations.
+    """
+    # Data parameters
+    signal = np.zeros(1000, dtype=float)
+    signal[200:] = 1
+    fs = 10 ** 4  # Hz
+    # Other parameters
+    omega = 2 * np.pi * freq
+
+    # Calculate result
+    calc_result = (
+        shock.abs_accel(
+            pd.DataFrame(signal, index=np.arange(len(signal)) / fs),
+            omega=omega,
+            damp=damp,
+        )
+        .to_numpy()
+        .flatten()
+    )
+
+    # Calculate expected result
+    t = np.arange(1, 801) / fs
+    atten = omega * (-damp + 1j * np.sqrt(1 - damp ** 2))
+    assert np.angle(atten) == pytest.approx(np.arccos(-damp))
+
+    expt_result = np.zeros_like(signal)
+    expt_result[200:] = (2 / np.tan(np.angle(atten))) * np.imag(np.exp(t * atten)) + 1
+
+    # Test results
+    assert np.allclose(calc_result, expt_result)
+
+
+@hyp.given(
     df_accel=hyp_np.arrays(
         dtype=np.float64,
         shape=(40, 2),
