@@ -103,7 +103,16 @@ def test_abs_accel(freq, damp):
     assert np.abs(atten) == pytest.approx(omega)
 
     expt_result = np.zeros_like(signal)
-    expt_result[200:] = (2 / np.tan(np.angle(atten))) * np.imag(np.exp(t * atten)) + 1
+    expt_result[200:] = (
+        omega
+        * (
+            np.real(np.exp(t * atten) / atten) * 2 * damp
+            + np.imag(np.exp(t * atten) / atten)
+            * (1 - 2 * damp ** 2)
+            / np.sqrt(1 - damp ** 2)
+        )
+        + 1
+    )
 
     # Test results
     assert np.allclose(calc_result, expt_result)
