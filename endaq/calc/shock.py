@@ -71,7 +71,7 @@ def _abs_accel_transfer_func(omega: float, damp: float = 0, dt: float = 1):
     Generate the transfer function
         H(s) = L{x"(t)}(s) / L{y"(t)}(s) = X(s)/Y(s)
     for the PDE
-        x" + (2ζω)x' + (ω²)x = (2ζω)y' + (ω^2)y
+        x" + (2ζω)x' + (ω²)x = (2ζω)y' + (ω²)y
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
@@ -89,7 +89,7 @@ def abs_accel(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
     The "absolute acceleration" follows the transfer function:
         H(s) = L{x"(t)}(s) / L{y"(t)}(s) = X(s)/Y(s)
     for the PDE:
-        x" + (2ζω)x' + (ω²)x = (2ζω)y' + (ω^2)y
+        x" + (2ζω)x' + (ω²)x = (2ζω)y' + (ω²)y
 
     :param accel: the absolute acceleration y"
     :param omega: the natural frequency ω of the SDOF system
