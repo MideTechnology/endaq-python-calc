@@ -103,3 +103,32 @@ dB_refs = {
     "SPL": 2e-5,  # Pascal
     "audio_intensity": 1e-12,  # W/m²
 }
+
+
+def resample(df: pd.DataFrame, sample_rate: Optional[float] = None):
+    """
+    Resample a dataframe to a desired sample rate (in Hz)
+
+    :param df: The DataFrame to resample, indexed by time
+    :param sample_rate: The desired sample rate to resample the given data to.
+     If one is not supplied, then it will use the same as it currently does, but
+     make the time stamps uniformally spaced
+    :return: The resampled data in a DataFrame
+    """
+    if sample_rate is None:
+        num_samples_after_resampling = len(df)
+    else:
+        dt = sample_spacing(df)
+        num_samples_after_resampling = int(dt * len(df) * sample_rate)
+
+    resampled_data, resampled_time = scipy.signal.resample(
+        df,
+        num_samples_after_resampling,
+        t=df.index,
+    )
+    resampled_df = pd.DataFrame(
+        resampled_data,
+        index=resampled_time,
+        columns=df.columns,
+    )
+    return resampled_df
