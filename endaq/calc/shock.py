@@ -23,6 +23,10 @@ def _rel_displ_transfer_func(omega: float, damp: float = 0, dt: float = 1):
         H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
     for the PDE
         z" + (2ζω)z' + (ω²)z = -y"
+
+    .. seealso::
+
+        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
@@ -49,6 +53,8 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
 
     .. seealso::
 
+        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
+
         `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
         Documentation for the transfer function class used to characterize the
         relative displacement calculation.
@@ -72,6 +78,10 @@ def _abs_accel_transfer_func(omega: float, damp: float = 0, dt: float = 1):
         H(s) = L{x"(t)}(s) / L{y"(t)}(s) = X(s)/Y(s)
     for the PDE
         x" + (2ζω)x' + (ω²)x = (2ζω)y' + (ω²)y
+
+    .. seealso::
+
+        `An Introduction To The Shock Response Spectrum <http://www.vibrationdata.com/tutorials2/srs_intr.pdf>`_
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
@@ -97,6 +107,8 @@ def abs_accel(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
     :return: the absolute acceleration x" of the SDOF system
 
     .. seealso::
+
+        `An Introduction To The Shock Response Spectrum <http://www.vibrationdata.com/tutorials2/srs_intr.pdf>`_
 
         `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
         Documentation for the transfer function class used to characterize the
@@ -141,6 +153,10 @@ def shock_spectrum(
     :return: the shock spectrum
 
     .. seealso::
+
+        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
+
+        `An Introduction To The Shock Response Spectrum <http://www.vibrationdata.com/tutorials2/srs_intr.pdf>`_
 
         `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
         Documentation for the transfer function class used to characterize the
@@ -224,6 +240,10 @@ def enveloping_half_sine(
     :param damp: the damping factor used to generate the input PVSS
     :return: a tuple of amplitudes and periods, each pair of which describes a
         half-sine pulse
+
+    .. seealso::
+
+        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
     """
 
     def amp_factor(damp):
