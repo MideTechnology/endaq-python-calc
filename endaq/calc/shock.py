@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import typing
 from typing import Tuple
 from collections import namedtuple
 import functools
@@ -16,12 +17,20 @@ from endaq.calc.stats import L2_norm
 from endaq.calc import utils
 
 
-def _rel_displ_transfer_func(omega: float, damp: float = 0, dt: float = 1):
+def _rel_displ_transfer_func(omega: float, damp: float = 0.0, dt: float = 1.0):
     """
     Generate the transfer function
-       H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
+        H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
     for the PDE
-       z" + (2ζω)z' + (ω²)z = -y"
+        z" + (2ζω)z' + (ω²)z = -y"
+
+    .. seealso::
+
+        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
+
+        `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
+        Documentation for the transfer function class used to characterize the
+        relative displacement calculation.
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
@@ -32,7 +41,7 @@ def _rel_displ_transfer_func(omega: float, damp: float = 0, dt: float = 1):
         ).to_discrete(dt=dt)
 
 
-def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFrame:
+def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0.0) -> pd.DataFrame:
     """
     Calculate the relative displacement for a SDOF system.
 
@@ -47,6 +56,8 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
     :return: the relative displacement z of the SDOF system
 
     .. seealso::
+
+        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
 
         `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
         Documentation for the transfer function class used to characterize the
@@ -65,28 +76,95 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0) -> pd.DataFram
     )
 
 
-def pseudo_velocity(
+def _abs_accel_transfer_func(omega: float, damp: float = 0.0, dt: float = 1.0):
+    """
+    Generate the transfer function
+        H(s) = L{x"(t)}(s) / L{y"(t)}(s) = X(s)/Y(s)
+    for the PDE
+        x" + (2ζω)x' + (ω²)x = (2ζω)y' + (ω²)y
+
+    .. seealso::
+
+        `An Introduction To The Shock Response Spectrum <http://www.vibrationdata.com/tutorials2/srs_intr.pdf>`_
+
+        `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
+        Documentation for the transfer function class used to characterize the
+        relative displacement calculation.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
+
+        return scipy.signal.TransferFunction(
+            [0, 2 * damp * omega, omega ** 2],
+            [1, 2 * damp * omega, omega ** 2],
+        ).to_discrete(dt=dt)
+
+
+def abs_accel(accel: pd.DataFrame, omega: float, damp: float = 0.0) -> pd.DataFrame:
+    """
+    Calculate the absolute acceleration for a SDOF system.
+
+    The "absolute acceleration" follows the transfer function:
+        H(s) = L{x"(t)}(s) / L{y"(t)}(s) = X(s)/Y(s)
+    for the PDE:
+        x" + (2ζω)x' + (ω²)x = (2ζω)y' + (ω²)y
+
+    :param accel: the absolute acceleration y"
+    :param omega: the natural frequency ω of the SDOF system
+    :param damp: the damping coefficient ζ of the SDOF system
+    :return: the absolute acceleration x" of the SDOF system
+
+    .. seealso::
+
+        `An Introduction To The Shock Response Spectrum <http://www.vibrationdata.com/tutorials2/srs_intr.pdf>`_
+
+        `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
+        Documentation for the transfer function class used to characterize the
+        relative displacement calculation.
+
+        `SciPy biquad filter <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.lfilter.html>`_
+        Documentation for the biquad function used to implement the transfer
+        function.
+    """
+    dt = utils.sample_spacing(accel)
+    tf = _abs_accel_transfer_func(omega, damp, dt)
+
+    return accel.apply(
+        functools.partial(scipy.signal.lfilter, tf.num, tf.den, axis=0),
+        raw=True,
+    )
+
+
+def shock_spectrum(
     accel: pd.DataFrame,
     freqs: npt.ArrayLike,
-    damp: float = 0,
+    damp: float = 0.0,
+    mode: typing.Literal["srs", "pvss"] = "srs",
     two_sided: bool = False,
     aggregate_axes: bool = False,
 ) -> pd.DataFrame:
     """
-    Calculate the pseudo velocity shock spectrum (PVSS) of an acceleration signal.
+    Calculate the shock spectrum of an acceleration signal.
 
     :param accel: the absolute acceleration y"
-    :param freqs: the natural frequencies at which to calculate the PVSS
+    :param freqs: the natural frequencies across which to calculate the spectrum
     :param damp: the damping coefficient ζ, related to the Q-factor by ζ = 1/(2Q);
         defaults to 0
+    :param mode: the type of spectrum to calculate:
+        - "srs" (default) specifies the Shock Response Spectrum (SRS)
+        - "pvss" specifies the Pseudo-Velocity Shock Spectrum (PVSS)
     :param two_sided: whether to return for each frequency:
         both the maximum negative and positive shocks (`True`),
         or simply the maximum absolute shock (`False`; default)
     :param aggregate_axes: whether to calculate the column-wise resultant (`True`)
-        or calculate the PVSS along each column independently (`False`; default)
-    :return: the PVSS
+        or calculate spectra along each column independently (`False`; default)
+    :return: the shock spectrum
 
     .. seealso::
+
+        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
+
+        `An Introduction To The Shock Response Spectrum <http://www.vibrationdata.com/tutorials2/srs_intr.pdf>`_
 
         `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
         Documentation for the transfer function class used to characterize the
@@ -102,6 +180,13 @@ def pseudo_velocity(
     if freqs.ndim != 1:
         raise ValueError("target frequencies must be in a 1D-array")
     omega = 2 * np.pi * freqs
+
+    if mode == "srs":
+        make_tf = _abs_accel_transfer_func
+    elif mode == "pvss":
+        make_tf = _rel_displ_transfer_func
+    else:
+        raise ValueError(f"invalid spectrum mode {mode:r}")
 
     results = np.empty(
         (2,) + freqs.shape + ((1,) if aggregate_axes else accel.shape[1:]),
@@ -119,7 +204,7 @@ def pseudo_velocity(
     zero_padding = np.zeros((int(T_padding // dt) + 1,) + accel.shape[1:])
 
     for i_nd in np.ndindex(freqs.shape):
-        tf = _rel_displ_transfer_func(omega[i_nd], damp, dt)
+        tf = make_tf(omega[i_nd], damp, dt)
         rd, zf = scipy.signal.lfilter(tf.num, tf.den, accel.to_numpy(), zi=zi, axis=0)
         rd_padding, _ = scipy.signal.lfilter(
             tf.num, tf.den, zero_padding, zi=zf, axis=0
@@ -129,12 +214,11 @@ def pseudo_velocity(
             rd = L2_norm(rd, axis=-1, keepdims=True)
             rd_padding = L2_norm(rd_padding, axis=-1, keepdims=True)
 
-        results[(0,) + i_nd] = -omega[i_nd] * np.minimum(
-            rd.min(axis=0), rd_padding.min(axis=0)
-        )
-        results[(1,) + i_nd] = omega[i_nd] * np.maximum(
-            rd.max(axis=0), rd_padding.max(axis=0)
-        )
+        results[(0,) + i_nd] = -np.minimum(rd.min(axis=0), rd_padding.min(axis=0))
+        results[(1,) + i_nd] = np.maximum(rd.max(axis=0), rd_padding.max(axis=0))
+
+    if mode == "pvss":
+        results = results * omega[..., np.newaxis]
 
     if aggregate_axes or not two_sided:
         return pd.DataFrame(
@@ -155,7 +239,7 @@ def pseudo_velocity(
 
 def enveloping_half_sine(
     pvss: pd.DataFrame,
-    damp: float = 0,
+    damp: float = 0.0,
 ) -> Tuple[pd.Series, pd.Series]:
     """
     Characterize a half-sine pulse whose PVSS envelopes the input.
@@ -164,6 +248,10 @@ def enveloping_half_sine(
     :param damp: the damping factor used to generate the input PVSS
     :return: a tuple of amplitudes and periods, each pair of which describes a
         half-sine pulse
+
+    .. seealso::
+
+        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
     """
 
     def amp_factor(damp):
