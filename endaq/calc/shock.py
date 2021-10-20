@@ -27,6 +27,10 @@ def _rel_displ_transfer_func(omega: float, damp: float = 0, dt: float = 1):
     .. seealso::
 
         `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
+
+        `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
+        Documentation for the transfer function class used to characterize the
+        relative displacement calculation.
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
@@ -82,6 +86,10 @@ def _abs_accel_transfer_func(omega: float, damp: float = 0, dt: float = 1):
     .. seealso::
 
         `An Introduction To The Shock Response Spectrum <http://www.vibrationdata.com/tutorials2/srs_intr.pdf>`_
+
+        `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
+        Documentation for the transfer function class used to characterize the
+        relative displacement calculation.
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", scipy.signal.BadCoefficients)
