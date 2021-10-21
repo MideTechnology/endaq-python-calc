@@ -17,6 +17,7 @@ import pkg_resources
 
 import endaq.calc
 
+
 # -- Project information -----------------------------------------------------
 
 project = "enDAQ-calc"
