@@ -150,8 +150,9 @@ def shock_spectrum(
     :param damp: the damping coefficient ζ, related to the Q-factor by ζ = 1/(2Q);
         defaults to 0
     :param mode: the type of spectrum to calculate:
-        - "srs" (default) specifies the Shock Response Spectrum (SRS)
-        - "pvss" specifies the Pseudo-Velocity Shock Spectrum (PVSS)
+
+        - ``'srs'`` (default) specifies the Shock Response Spectrum (SRS)
+        - ``'pvss'`` specifies the Pseudo-Velocity Shock Spectrum (PVSS)
     :param two_sided: whether to return for each frequency:
         both the maximum negative and positive shocks (`True`),
         or simply the maximum absolute shock (`False`; default)
