@@ -25,7 +25,7 @@ def _rel_displ_transfer_func(omega: float, damp: float = 0.0, dt: float = 1.0):
 
     .. seealso::
 
-        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
+        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock, Howard A. Gaberson <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
 
         `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
         Documentation for the transfer function class used to characterize the
@@ -56,7 +56,7 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0.0) -> pd.DataFr
 
     .. seealso::
 
-        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
+        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock, Howard A. Gaberson <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
 
         `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
         Documentation for the transfer function class used to characterize the
@@ -84,7 +84,7 @@ def _abs_accel_transfer_func(omega: float, damp: float = 0.0, dt: float = 1.0):
 
     .. seealso::
 
-        `An Introduction To The Shock Response Spectrum <http://www.vibrationdata.com/tutorials2/srs_intr.pdf>`_
+        `An Introduction To The Shock Response Spectrum, Tom Irvine, 9 July 2012 <http://www.vibrationdata.com/tutorials2/srs_intr.pdf>`_
 
         `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
         Documentation for the transfer function class used to characterize the
@@ -115,7 +115,7 @@ def abs_accel(accel: pd.DataFrame, omega: float, damp: float = 0.0) -> pd.DataFr
 
     .. seealso::
 
-        `An Introduction To The Shock Response Spectrum <http://www.vibrationdata.com/tutorials2/srs_intr.pdf>`_
+        `An Introduction To The Shock Response Spectrum, Tom Irvine, 9 July 2012 <http://www.vibrationdata.com/tutorials2/srs_intr.pdf>`_
 
         `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
         Documentation for the transfer function class used to characterize the
@@ -162,9 +162,9 @@ def shock_spectrum(
 
     .. seealso::
 
-        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
+        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock, Howard A. Gaberson <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
 
-        `An Introduction To The Shock Response Spectrum <http://www.vibrationdata.com/tutorials2/srs_intr.pdf>`_
+        `An Introduction To The Shock Response Spectrum, Tom Irvine, 9 July 2012 <http://www.vibrationdata.com/tutorials2/srs_intr.pdf>`_
 
         `SciPy transfer functions <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.TransferFunction.html>`_
         Documentation for the transfer function class used to characterize the
@@ -251,7 +251,7 @@ def enveloping_half_sine(
 
     .. seealso::
 
-        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
+        `Pseudo Velocity Shock Spectrum Rules For Analysis Of Mechanical Shock, Howard A. Gaberson <https://info.endaq.com/hubfs/pvsrs_rules.pdf>`_
     """
 
     def amp_factor(damp):
