@@ -31,7 +31,7 @@ jobs:
 
       - run: python -m pip install .[test]
 
-      - run: python -m pytest tests --cov=endaq.calc
+      - run: python -m pytest tests --cov=endaq.calc -n auto
 
       - uses: codecov/codecov-action@v2
         with:
