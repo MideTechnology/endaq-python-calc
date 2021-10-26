@@ -6,6 +6,7 @@ from collections.abc import Sequence
 
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 
 
 def L2_norm(
@@ -80,3 +81,28 @@ def rms(
     :return: an array containing the computed values
     """
     return np.sqrt(np.mean(np.abs(array) ** 2, axis=axis, keepdims=keepdims))
+
+
+def rolling_rms(
+    df: Union[pd.DataFrame, pd.Series], window_len: int, *args, **kwargs
+) -> Union[pd.DataFrame, pd.Series]:
+    """
+    Calculate a rolling root-mean-square (RMS) over a pandas `DataFrame`.
+
+    This function is equivalent to, but computationally faster than the following::
+
+        df.rolling(window_len).apply(endaq.calc.stats.rms)
+
+    :param df: the input data
+    :param window_len: the length of the rolling window
+    :param args: the positional arguments to pass into `df.rolling().mean`
+    :param kwargs: the keyword arguments to pass into `df.rolling().mean`
+    :return: the rolling-windowed RMS
+
+    .. seealso::
+
+        `Pandas Rolling Mean method <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.core.window.rolling.Rolling.mean.html>`_
+        `Pandas Rolling Standard Deviation method <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.core.window.rolling.Rolling.std.html>`_
+        - similar to this function, but first removes the windowed mean before squaring
+    """
+    return df.pow(2).rolling(window_len).mean(*args, **kwargs).apply(np.sqrt, raw=True)
