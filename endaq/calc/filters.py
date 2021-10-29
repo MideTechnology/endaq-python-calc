@@ -60,16 +60,6 @@ def butterworth(
         fs=1 / dt,
         output="sos",
     )
+    array = scipy.signal.sosfiltfilt(sos_coeffs, df.to_numpy(), axis=0)
 
-    array = df.to_numpy()
-
-    for b, a in zip(*np.split(sos_coeffs, [3], axis=-1)):
-        array = scipy.signal.filtfilt(
-            b, a, array, axis=0, method="gust", irlen=5 * 10 ** 4
-        )
-
-    return pd.DataFrame(
-        array,
-        index=df.index,
-        columns=df.columns,
-    )
+    return pd.DataFrame(array, index=df.index, columns=df.columns)
