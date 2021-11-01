@@ -70,7 +70,7 @@ def welch(df: pd.DataFrame, bin_width: float = 1, **kwargs) -> pd.DataFrame:
     :param df: the input data
     :param bin_width: the desired width of the resulting frequency bins, in Hz;
         defaults to 1 Hz
-    :param **kwargs: other parameters to pass directly to `scipy.signal.welch`
+    :param kwargs: other parameters to pass directly to `scipy.signal.welch`
     :return: a periodogram
 
     .. seealso::
@@ -179,7 +179,7 @@ def to_octave(
     :param fstart: the first frequency bin, in Hz; defaults to 1 Hz
     :param octave_bins: the number of frequency bins in each octave; defaults
         to 12
-    :param **kwargs: other parameters to pass directly to `to_jagged`
+    :param kwargs: other parameters to pass directly to `to_jagged`
     :return: a periodogram with the given logarithmic frequency spacing
     """
     max_f = df.index.max()

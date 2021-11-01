@@ -5,12 +5,11 @@ from typing import Union
 from collections.abc import Sequence
 
 import numpy as np
-import numpy.typing as npt
 import pandas as pd
 
 
 def L2_norm(
-    array: npt.ArrayLike,
+    array: np.ndarray,
     axis: Union[None, typing.SupportsIndex, Sequence[typing.SupportsIndex]] = None,
     keepdims: bool = False,
 ) -> np.ndarray:
@@ -29,7 +28,7 @@ def L2_norm(
 
 
 def max_abs(
-    array: npt.ArrayLike,
+    array: np.ndarray,
     axis: Union[None, typing.SupportsIndex, Sequence[typing.SupportsIndex]] = None,
     keepdims: bool = False,
 ) -> np.ndarray:
@@ -65,7 +64,7 @@ def max_abs(
 
 
 def rms(
-    array: npt.ArrayLike,
+    array: np.ndarray,
     axis: Union[None, typing.SupportsIndex, Sequence[typing.SupportsIndex]] = None,
     keepdims: bool = False,
 ):
