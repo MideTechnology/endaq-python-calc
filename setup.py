@@ -21,7 +21,7 @@ EXAMPLE_REQUIRES = [
 
 setuptools.setup(
         name='endaq-calc',
-        version='1.0.0b1',
+        version='1.1.0',
         author='Mide Technology',
         author_email='help@mide.com',
         description='a computational backend for vibration analysis',
