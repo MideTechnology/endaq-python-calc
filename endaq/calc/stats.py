@@ -67,7 +67,7 @@ def rms(
     array: np.ndarray,
     axis: Union[None, typing.SupportsIndex, Sequence[typing.SupportsIndex]] = None,
     keepdims: bool = False,
-):
+) -> np.ndarray:
     """
     Calculate the root-mean-square (RMS) along a given axis.
 

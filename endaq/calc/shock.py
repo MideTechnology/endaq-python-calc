@@ -16,7 +16,9 @@ from endaq.calc.stats import L2_norm
 from endaq.calc import utils
 
 
-def _rel_displ_transfer_func(omega: float, damp: float = 0.0, dt: float = 1.0):
+def _rel_displ_transfer_func(
+    omega: float, damp: float = 0.0, dt: float = 1.0
+) -> scipy.signal.ltisys.TransferFunctionDiscrete:
     """
     Generate the transfer function
         H(s) = L{z(t)}(s) / L{y"(t)}(s) = (1/s²)(Z(s)/Y(s))
@@ -75,7 +77,9 @@ def rel_displ(accel: pd.DataFrame, omega: float, damp: float = 0.0) -> pd.DataFr
     )
 
 
-def _abs_accel_transfer_func(omega: float, damp: float = 0.0, dt: float = 1.0):
+def _abs_accel_transfer_func(
+    omega: float, damp: float = 0.0, dt: float = 1.0
+) -> scipy.signal.ltisys.TransferFunctionDiscrete:
     """
     Generate the transfer function
         H(s) = L{x"(t)}(s) / L{y"(t)}(s) = X(s)/Y(s)

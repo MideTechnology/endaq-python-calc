@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import typing
-from typing import Optional
+from typing import Optional, Union
 import warnings
 
 import numpy as np
@@ -12,7 +12,7 @@ import pandas as pd
 
 def sample_spacing(
     df: pd.DataFrame, convert: typing.Literal[None, "to_seconds"] = "to_seconds"
-):
+) -> Union[float, np.timedelta64]:
     """
     Calculate the average spacing between individual samples.
 
@@ -60,7 +60,7 @@ def logfreqs(
     )
 
 
-def to_dB(data: np.ndarray, reference: float, squared=False):
+def to_dB(data: np.ndarray, reference: float, squared: bool = False) -> np.ndarray:
     """
     Scale data into units of decibels.
 
@@ -105,7 +105,7 @@ dB_refs = {
 }
 
 
-def resample(df: pd.DataFrame, sample_rate: Optional[float] = None):
+def resample(df: pd.DataFrame, sample_rate: Optional[float] = None) -> pd.DataFrame:
     """
     Resample a dataframe to a desired sample rate (in Hz)
 
