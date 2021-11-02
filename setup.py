@@ -4,13 +4,14 @@ with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
 
 INSTALL_REQUIRES = [
-    "numpy",
-    "pandas",
-    "scipy",
+    "numpy>=1.18",
+    "pandas>=1.2",
+    "scipy>=1.6",
     ]
 
 TEST_REQUIRES = [
     "pytest",
+    "pytest-cov",
     "hypothesis",
     "sympy",
     ]
@@ -20,7 +21,7 @@ EXAMPLE_REQUIRES = [
 
 setuptools.setup(
         name='endaq-calc',
-        version='1.0.0b1',
+        version='1.1.0',
         author='Mide Technology',
         author_email='help@mide.com',
         description='a computational backend for vibration analysis',

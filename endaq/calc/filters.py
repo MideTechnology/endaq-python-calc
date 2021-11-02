@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import Optional, Union, Tuple
 
-import numpy as np
 import pandas as pd
 import scipy.signal
+
+from endaq.calc import utils
 
 
 def butterworth(
@@ -18,6 +19,21 @@ def butterworth(
 
     This function uses Butterworth filter designs, and implements the filter(s)
     as bi-directional digital biquad filters, split into second-order sections.
+
+    :param df: the input data; cutoff frequencies are relative to the
+        timestamps in `df.index`
+    :param low_cutoff: the low-frequency cutoff, if any; frequencies below this
+        value are rejected, and frequencies above this value are preserved
+    :param high_cutoff: the high-frequency cutoff, if any; frequencies above
+        this value are rejected, and frequencies below this value are preserved
+    :param half_order: half of the order of the filter; higher orders provide
+        more aggressive stopband reduction
+    :return: the filtered data
+
+    .. seealso::
+
+        `SciPy Butterworth filter design <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.butter.html>`_
+        Documentation for the butterworth filter design function.
     """
     cutoff_freqs: Union[float, Tuple[float, float]]
     filter_type: str
@@ -34,9 +50,7 @@ def butterworth(
     else:
         return df
 
-    dt = (df.index[-1] - df.index[0]) / (len(df.index) - 1)
-    if isinstance(dt, (np.timedelta64, pd.Timedelta)):
-        dt = dt / np.timedelta64(1, "s")
+    dt = utils.sample_spacing(df)
 
     sos_coeffs = scipy.signal.butter(
         N=half_order,
@@ -45,16 +59,6 @@ def butterworth(
         fs=1 / dt,
         output="sos",
     )
+    array = scipy.signal.sosfiltfilt(sos_coeffs, df.to_numpy(), axis=0)
 
-    array = df.to_numpy()
-
-    for b, a in zip(*np.split(sos_coeffs, [3], axis=-1)):
-        array = scipy.signal.filtfilt(
-            b, a, array, axis=0, method="gust", irlen=5 * 10 ** 4
-        )
-
-    return pd.DataFrame(
-        array,
-        index=df.index,
-        columns=df.columns,
-    )
+    return pd.DataFrame(array, index=df.index, columns=df.columns)

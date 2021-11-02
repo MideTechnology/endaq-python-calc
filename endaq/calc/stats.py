@@ -5,23 +5,33 @@ from typing import Union
 from collections.abc import Sequence
 
 import numpy as np
-import scipy.ndimage
+import pandas as pd
 
 
 def L2_norm(
-    data: np.ndarray,
+    array: np.ndarray,
     axis: Union[None, typing.SupportsIndex, Sequence[typing.SupportsIndex]] = None,
     keepdims: bool = False,
-):
-    """Compute the L2 norm (a.k.a. the Euclidean Norm)."""
-    return np.sqrt(np.sum(np.abs(data) ** 2, axis=axis, keepdims=keepdims))
+) -> np.ndarray:
+    """
+    Compute the L2 norm (a.k.a. the Euclidean Norm).
+
+    :param array: the input array
+    :param axis: the axis/axes along which to aggregate; if `None`, the L2 norm
+        is computed along the flattened array
+    :param keepdims: if `True`, the axes which are reduced are left in the
+        result as dimensions with size one; if `False` (default), the reduced
+        axes are removed
+    :return: an array containing the computed values
+    """
+    return np.sqrt(np.sum(np.abs(array) ** 2, axis=axis, keepdims=keepdims))
 
 
 def max_abs(
     array: np.ndarray,
     axis: Union[None, typing.SupportsIndex, Sequence[typing.SupportsIndex]] = None,
     keepdims: bool = False,
-):
+) -> np.ndarray:
     """
     Compute the maximum of the absolute value of an array.
 
@@ -33,7 +43,15 @@ def max_abs(
     array `np.abs(array)`, it allocates for the axis-collapsed smaller arrays
     `np.amax(array)` & `np.amin(array)`.
 
-    Note - this method does not work on complex-valued arrays.
+    Note - this method does **not** work on complex-valued arrays.
+
+    :param array: the input data
+    :param axis: the axis/axes along which to aggregate; if `None`, the
+        absolute maximum is computed along the flattened array
+    :param keepdims: if `True`, the axes which are reduced are left in the
+        result as dimensions with size one; if `False` (default), the reduced
+        axes are removed
+    :return: an array containing the computed values
     """
     # Forbid complex-valued data
     if np.iscomplexobj(array):
@@ -46,21 +64,44 @@ def max_abs(
 
 
 def rms(
-    data: np.ndarray,
+    array: np.ndarray,
     axis: Union[None, typing.SupportsIndex, Sequence[typing.SupportsIndex]] = None,
     keepdims: bool = False,
-):
-    """Calculate the root-mean-square (RMS) along a given axis."""
-    return np.sqrt(np.mean(np.abs(data) ** 2, axis=axis, keepdims=keepdims))
+) -> np.ndarray:
+    """
+    Calculate the root-mean-square (RMS) along a given axis.
+
+    :param array: the input array
+    :param axis: the axis/axes along which to aggregate; if `None`, the RMS is
+        computed along the flattened array
+    :param keepdims: if `True`, the axes which are reduced are left in the
+        result as dimensions with size one; if `False` (default), the reduced
+        axes are removed
+    :return: an array containing the computed values
+    """
+    return np.sqrt(np.mean(np.abs(array) ** 2, axis=axis, keepdims=keepdims))
 
 
 def rolling_rms(
-    array: np.ndarray,
-    nperseg: int = 256,
-    axis: typing.SupportsIndex = -1,
-):
-    """Calculate a rolling RMS along a given axis."""
-    sq = array ** 2
-    window = np.ones(nperseg, dtype=array.dtype) / nperseg
-    mean_sq = scipy.ndimage.convolve1d(sq, window, axis=axis, mode="mirror")
-    return np.sqrt(mean_sq)
+    df: Union[pd.DataFrame, pd.Series], window_len: int, *args, **kwargs
+) -> Union[pd.DataFrame, pd.Series]:
+    """
+    Calculate a rolling root-mean-square (RMS) over a pandas `DataFrame`.
+
+    This function is equivalent to, but computationally faster than the following::
+
+        df.rolling(window_len).apply(endaq.calc.stats.rms)
+
+    :param df: the input data
+    :param window_len: the length of the rolling window
+    :param args: the positional arguments to pass into `df.rolling().mean`
+    :param kwargs: the keyword arguments to pass into `df.rolling().mean`
+    :return: the rolling-windowed RMS
+
+    .. seealso::
+
+        `Pandas Rolling Mean method <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.core.window.rolling.Rolling.mean.html>`_
+        `Pandas Rolling Standard Deviation method <https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.core.window.rolling.Rolling.std.html>`_
+        - similar to this function, but first removes the windowed mean before squaring
+    """
+    return df.pow(2).rolling(window_len).mean(*args, **kwargs).apply(np.sqrt, raw=True)
