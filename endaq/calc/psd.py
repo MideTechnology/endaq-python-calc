@@ -133,7 +133,7 @@ def to_jagged(
 
     # Check that PSD samples do not skip any frequency bins
     spacing_test = np.diff(np.searchsorted(freq_splits, df.index))
-    if np.any(spacing_test > 1):
+    if np.any(spacing_test < 1):
         warnings.warn(
             "empty frequency bins in re-binned PSD; "
             "original PSD's frequency spacing is too coarse",
