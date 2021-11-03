@@ -63,7 +63,12 @@ def _np_histogram_nd(array, bins=10, weights=None, axis=-1, **kwargs):
     return result
 
 
-def welch(df: pd.DataFrame, bin_width: float = 1, **kwargs) -> pd.DataFrame:
+def welch(
+    df: pd.DataFrame,
+    bin_width: float = 1,
+    scaling: typing.Literal[None, "density", "spectrum", "parseval"] = None,
+    **kwargs,
+) -> pd.DataFrame:
     """
     Perform `scipy.signal.welch` with a specified frequency spacing.
 
@@ -81,12 +86,21 @@ def welch(df: pd.DataFrame, bin_width: float = 1, **kwargs) -> pd.DataFrame:
     dt = utils.sample_spacing(df)
     fs = 1 / dt
 
+    if scaling == "parseval":
+        kwargs["scaling"] = "density"
+    elif scaling is not None:
+        kwargs["scaling"] = scaling
+
     freqs, psd = scipy.signal.welch(
         df.values, fs=fs, nperseg=int(fs / bin_width), **kwargs, axis=0
     )
-    return pd.DataFrame(
+    result = pd.DataFrame(
         psd, index=pd.Series(freqs, name="frequency (Hz)"), columns=df.columns
     )
+
+    if scaling == "parseval":
+        result = result * freqs[1]
+    return result
 
 
 def differentiate(df: pd.DataFrame, n: float = 1) -> pd.DataFrame:
