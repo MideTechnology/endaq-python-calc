@@ -68,7 +68,7 @@ def to_dB(data: np.ndarray, reference: float, squared: bool = False) -> np.ndarr
     Decibels are a log-scaled ratio of some value against a reference;
     typically this is expressed as follows:
 
-    ..math:: dB = 10 \\log10\\left( \\frac{x}{x_{\\text{ref}}} \\right)
+    .. math:: dB = 10 \\log10\\left( \\frac{x}{x_{\\text{ref}}} \\right)
 
     By convention, "decibel" units tend to operate on units of *power*. For
     units that are proportional to power *when squared* (e.g., volts, amps,
@@ -76,7 +76,8 @@ def to_dB(data: np.ndarray, reference: float, squared: bool = False) -> np.ndarr
     :math:`dB = 10 \\log20(...)`). Users can specify which scaling to use
     with the `squared` parameter.
 
-    ..note:: Decibels can**NOT** be calculated from negative values.
+    .. note::
+        Decibels can **NOT** be calculated from negative values.
 
         For example, to calculate dB on arbitrary time-series data, typically
         data is first aggregated via a total or a rolling RMS or PSD, and the
