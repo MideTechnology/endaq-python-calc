@@ -59,7 +59,8 @@ df_accel_vc = endaq.calc.psd.vc_curves(df_accel_psd, fstart=1, octave_bins=3)
 
 ### Shock Analysis
 ``` python
-df_accel_pvss = endaq.calc.shock.pseudo_velocity(df_accel, freqs=2 ** np.arange(-10, 13, 0.25), damp=0.05)
+df_accel_pvss = endaq.calc.shock.shock_spectrum(df_accel, freqs=2 ** np.arange(-10, 13, 0.25), damp=0.05, mode="pvss")
+df_accel_srs = endaq.calc.shock.shock_spectrum(df_accel, freqs=[1, 10, 100, 1000], damp=0.05, mode="srs")
 ```
 
 #### Shock Characterization: Half-Sine-Wave Pulse
