@@ -75,6 +75,10 @@ def welch(
     :param df: the input data
     :param bin_width: the desired width of the resulting frequency bins, in Hz;
         defaults to 1 Hz
+    :param scaling: the scaling of the output; `"density"` & `"spectrum"`
+        correspond to the same options in `scipy.signal.welch`; `"parseval"`
+        will maintain the "energy" between the input & output, s.t.
+        `welch(df, scaling="parseval") - df.pow(2).sum()` is minimized
     :param kwargs: other parameters to pass directly to `scipy.signal.welch`
     :return: a periodogram
 
