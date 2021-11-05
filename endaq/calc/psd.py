@@ -94,13 +94,12 @@ def welch(
     freqs, psd = scipy.signal.welch(
         df.values, fs=fs, nperseg=int(fs / bin_width), **kwargs, axis=0
     )
-    result = pd.DataFrame(
+    if scaling == "parseval":
+        psd = psd * freqs[1]
+
+    return pd.DataFrame(
         psd, index=pd.Series(freqs, name="frequency (Hz)"), columns=df.columns
     )
-
-    if scaling == "parseval":
-        result = result * freqs[1]
-    return result
 
 
 def differentiate(df: pd.DataFrame, n: float = 1) -> pd.DataFrame:

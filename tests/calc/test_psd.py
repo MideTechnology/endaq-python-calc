@@ -31,7 +31,7 @@ def test_welch_parseval(df):
     time-domain RMS.
     """
     df_psd = psd.welch(df, bin_width=1, scaling="parseval")
-    assert df_psd.to_numpy().sum() ** 0.5 == pytest.approx(stats.rms(df.to_numpy()))
+    assert df_psd.to_numpy().sum() == pytest.approx(stats.rms(df.to_numpy()) ** 2)
 
 
 @pytest.mark.parametrize(
