@@ -16,7 +16,12 @@ from endaq.calc import psd, stats
     df=hyp_np.arrays(
         dtype=np.float64,
         shape=(200,),
-        elements=hyp_st.floats(-1e7, 1e7),
+        elements=hyp_st.floats(
+            # leave at least half the bits of precision (52 / 2) in the
+            # mean-subtracted result
+            1,
+            1e26,
+        ),
     )
     .map(
         lambda array: (array - array.mean(keepdims=True))
