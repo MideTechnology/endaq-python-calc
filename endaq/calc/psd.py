@@ -126,12 +126,14 @@ def to_jagged(
     :return: a periodogram with the given frequency spacing
     """
     freq_splits = np.asarray(freq_splits)
-    if not np.all(np.diff(freq_splits, prepend=0) > 0):
-        raise ValueError
+    if len(freq_splits) < 2:
+        raise ValueError("need at least two frequency bounds")
+    if not np.all(freq_splits[:-1] <= freq_splits[1:]):
+        raise ValueError("frequency bounds must be strictly increasing")
 
     # Check that PSD samples do not skip any frequency bins
     spacing_test = np.diff(np.searchsorted(freq_splits, df.index))
-    if np.any(spacing_test > 1):
+    if np.any(spacing_test < 1):
         warnings.warn(
             "empty frequency bins in re-binned PSD; "
             "original PSD's frequency spacing is too coarse",
