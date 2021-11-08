@@ -63,13 +63,23 @@ def _np_histogram_nd(array, bins=10, weights=None, axis=-1, **kwargs):
     return result
 
 
-def welch(df: pd.DataFrame, bin_width: float = 1, **kwargs) -> pd.DataFrame:
+def welch(
+    df: pd.DataFrame,
+    bin_width: float = 1,
+    scaling: typing.Literal[None, "density", "spectrum", "parseval"] = None,
+    **kwargs,
+) -> pd.DataFrame:
     """
     Perform `scipy.signal.welch` with a specified frequency spacing.
 
     :param df: the input data
     :param bin_width: the desired width of the resulting frequency bins, in Hz;
         defaults to 1 Hz
+    :param scaling: the scaling of the output; `"density"` & `"spectrum"`
+        correspond to the same options in `scipy.signal.welch`; `"parseval"`
+        will maintain the "energy" between the input & output, s.t.
+        `welch(df, scaling="parseval").sum(axis="rows")` is roughly equal to
+        `df.abs().pow(2).sum(axis="rows")`
     :param kwargs: other parameters to pass directly to `scipy.signal.welch`
     :return: a periodogram
 
@@ -77,13 +87,25 @@ def welch(df: pd.DataFrame, bin_width: float = 1, **kwargs) -> pd.DataFrame:
 
         `SciPy Welch's method <https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.welch.html>`_
         Documentation for the periodogram function wrapped internally.
+
+        `Parseval's Theorem <https://en.wikipedia.org/wiki/Parseval's_theorem>_`
+        - the theorem relating the RMS of a time-domain signal to that of its
+        frequency spectrum
     """
     dt = utils.sample_spacing(df)
     fs = 1 / dt
 
+    if scaling == "parseval":
+        kwargs["scaling"] = "density"
+    elif scaling is not None:
+        kwargs["scaling"] = scaling
+
     freqs, psd = scipy.signal.welch(
         df.values, fs=fs, nperseg=int(fs / bin_width), **kwargs, axis=0
     )
+    if scaling == "parseval":
+        psd = psd * freqs[1]
+
     return pd.DataFrame(
         psd, index=pd.Series(freqs, name="frequency (Hz)"), columns=df.columns
     )

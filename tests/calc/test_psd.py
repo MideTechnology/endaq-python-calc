@@ -9,7 +9,54 @@ import hypothesis.extra.numpy as hyp_np
 import numpy as np
 import pandas as pd
 
-from endaq.calc import psd
+from endaq.calc import psd, stats
+
+
+@hyp.given(
+    df=hyp_np.arrays(
+        dtype=np.float64,
+        shape=(200,),
+        elements=hyp_st.floats(
+            # leave at least half the bits of precision (52 / 2) in the
+            # mean-subtracted result
+            1,
+            1e26,
+        ),
+    )
+    .map(
+        lambda array: (array - array.mean(keepdims=True))
+        # V this pushes the zero-mean'd values away from zero
+        * 2 ** (np.finfo(np.float64).minexp // 2)
+    )
+    .map(lambda array: pd.DataFrame(array, index=np.arange(len(array)) * 1e-1)),
+)
+def test_welch_parseval(df):
+    """
+    Test to confirm that `scaling="parseval"` maintains consistency with the
+    time-domain RMS.
+    """
+    df_psd = psd.welch(df, bin_width=1, scaling="parseval")
+    assert df_psd.to_numpy().sum() == pytest.approx(stats.rms(df.to_numpy()) ** 2)
+
+
+@pytest.mark.parametrize(
+    "agg1, agg2",
+    [
+        ("mean", lambda x, axis=-1: np.nan_to_num(np.mean(x, axis=axis))),
+        ("sum", np.sum),
+    ],
+)
+def test_to_jagged_modes(psd_df, freq_splits, agg1, agg2):
+    """Test `to_jagged(..., mode='mean')` against the equivalent `mode=np.mean`."""
+    result1 = psd.to_jagged(psd_df, freq_splits, agg=agg1)
+    result2 = psd.to_jagged(psd_df, freq_splits, agg=agg2)
+
+    assert np.all(result1.index == result2.index)
+    np.testing.assert_allclose(
+        result1.to_numpy(),
+        result2.to_numpy(),
+        atol=psd_df.min().min() * 1e-7,
+    )
 
 
 @hyp.given(
