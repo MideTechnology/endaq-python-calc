@@ -1,3 +1,5 @@
+**NOTE This package is now part of the main endaq repo, and can be found at https://github.com/MideTechnology/endaq-python/tree/development/endaq/calc This repo is Archived**
+---
 # endaq-calc - a computational backend for vibration analysis
 
 endaq-calc is a package comprising a collection of common calculations for vibration analysis. It leverages the standard Python scientific stack (NumPy, SciPy, Pandas) in order to enable engineers to perform domain-specific calculations in a few lines of code, without having to first master Python and its scientific stack in their entireties.
